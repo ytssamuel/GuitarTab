@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>勝於塵土 - 和弦即時轉調工具</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+    pre { background: #fff; padding: 1em; border: 1px solid #ccc; white-space: pre-wrap; }
+    .controls { margin-bottom: 1em; }
+    button { margin: 2px; padding: 6px 12px; }
+    h2 { margin-top: 1em; }
+  </style>
+</head>
+<body>
+
+<h1>🎸 勝於塵土 和弦譜轉調工具</h1>
+
+<div class="controls">
+  <h2>🎼 選擇調性 (Key):</h2>
+  <div id="key-buttons"></div>
+
+  <h2>🎸 Capo 位置:</h2>
+  <div id="capo-buttons"></div>
+</div>
+
+<h2>和弦譜:</h2>
+<pre id="chord-display"></pre>
+
+<script>
+const originalKey = 'G'; // 和弦譜原始調
+let currentKey = 'G';
+let capo = 0;
+
+const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const chordMap = {
+  'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11
+};
+
+function transposeChord(chord, diff) {
+  let match = chord.match(/^([A-G][b#]?)(.*)$/);
+  if (!match) return chord;
+  let [_, root, suffix] = match;
+  let idx = (chordMap[root] + diff + 12) % 12;
+  return keys[idx] + suffix;
+}
+
+function transposeChordSheet(sheet, fromKey, toKey, capoShift) {
+  let diff = (chordMap[toKey] - chordMap[fromKey] - capoShift + 12) % 12;
+  return sheet.replace(/\b([A-G][b#]?)(maj7|sus4|m|min|dim|aug|add\d*|\d*|)\b/g, (m, root, suffix) => {
+    return transposeChord(root + suffix, diff);
+  });
+}
+
+const chordSheet = `
+Key  : ♭B (AG: G)   Capo : 3
+
+[Pre]
+    G  |  D  
+
+[Verse 1]
+   G          Em
+我價值勝過於塵土
+          C      D   G       
+當你為我而來，必消失無形
+   G          Em
+因信基督我今站立
+        C      D    G
+當你注視我，一切都更新
+
+[Chorus]
+      Cmaj7  Dsus4    G 
+我是玫瑰，你受苦的喜悅
+      Cmaj7  Dsus4     G      
+我深知道，你因我動心歡愉
+    Cmaj7 Dsus4     Em
+當我的心四面遭受責難
+           Cmaj7    Dsus4  G
+你以真理護庇我，是你的玫瑰
+
+[Verse 2]
+   G          Em
+生命不再憑眼所見
+          C      D   G 
+我現與他合一，彰顯在他裡
+   G          Em
+我的愛為他寶貴珍惜
+          C      D   G 
+主我用眼一看，奪了你的心
+
+[Tag 1] x4
+      G          D
+我是玫瑰，谷中百合花
+     Em       C
+屬於你，我甚美麗
+
+[Tag 2] x2
+ G          D  
+婚禮即將就要來臨
+              Em        C
+因我就是為了羔羊 的婚娶而活
+`;
+
+function renderChordSheet() {
+  const updated = transposeChordSheet(chordSheet, originalKey, currentKey, capo);
+  document.getElementById("chord-display").textContent = updated;
+}
+
+function createButtons(containerId, values, clickHandler) {
+  const container = document.getElementById(containerId);
+  values.forEach(val => {
+    const btn = document.createElement("button");
+    btn.textContent = val;
+    btn.onclick = () => {
+      clickHandler(val);
+      renderChordSheet();
+    };
+    container.appendChild(btn);
+  });
+}
+
+// 初始化按鈕
+createButtons("key-buttons", keys, key => currentKey = key);
+createButtons("capo-buttons", Array.from({length: 9}, (_, i) => i), c => capo = parseInt(c));
+
+// 初始渲染
+renderChordSheet();
+</script>
+
+</body>
+</html>
