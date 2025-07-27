@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>和弦譜轉調工具</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+    pre { background: #fff; padding: 1em; border: 1px solid #ccc; white-space: pre-wrap; }
+    .controls { margin-bottom: 1em; }
+    button, input[type="file"] { margin: 4px; padding: 6px 12px; }
+    h2 { margin-top: 1em; }
+  </style>
+</head>
+<body>
+
+<h1>🎸 和弦譜轉調工具</h1>
+
+<div class="controls">
+  <h2>🎼 選擇調性 (Key):</h2>
+  <div id="key-buttons"></div>
+
+  <h2>🎸 Capo 位置:</h2>
+  <div id="capo-buttons"></div>
+
+  <h2>📤 上傳歌譜檔 (.txt/.md)：</h2>
+  <input type="file" id="file-input" accept=".txt,.md" />
+
+  <h2>📥 下載目前歌譜：</h2>
+  <button onclick="downloadChordSheet()">下載</button>
+</div>
+
+<h2>和弦譜:</h2>
+<pre id="chord-display"></pre>
+
+<script>
+const keys = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const chordMap = {
+  'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11
+};
+
+let originalKey = 'G';
+let currentKey = 'G';
+let capo = 0;
+let chordSheet = '';
+
+function transposeChord(chord, diff) {
+  let match = chord.match(/^([A-G][b#]?)(.*)$/);
+  if (!match) return chord;
+  let [_, root, suffix] = match;
+  let idx = (chordMap[root] + diff + 12) % 12;
+  return keys[idx] + suffix;
+}
+
+function transposeChordSheet(sheet, fromKey, toKey, capoShift) {
+  let diff = (chordMap[toKey] - chordMap[fromKey] - capoShift + 12) % 12;
+  return sheet.replace(/\b([A-G][b#]?)(maj7|sus4|m|min|dim|aug|add\d*|\d*|)?\b/g, (m, root, suffix) => {
+    return transposeChord(root + (suffix || ''), diff);
+  });
+}
+
+function renderChordSheet() {
+  const updated = transposeChordSheet(chordSheet, originalKey, currentKey, capo);
+  document.getElementById("chord-display").textContent = updated;
+}
+
+function createButtons(containerId, values, clickHandler) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  values.forEach(val => {
+    const btn = document.createElement("button");
+    btn.textContent = val;
+    btn.onclick = () => {
+      clickHandler(val);
+      renderChordSheet();
+    };
+    container.appendChild(btn);
+  });
+}
+
+// 初始化 Key 與 Capo 選單
+createButtons("key-buttons", keys, key => currentKey = key);
+createButtons("capo-buttons", Array.from({length: 9}, (_, i) => i), c => capo = parseInt(c));
+
+// 處理上傳
+document.getElementById("file-input").addEventListener("change", event => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    chordSheet = text;
+
+    // 自動抓 Key 與 Capo（格式：Key : G   Capo : 3）
+    const keyMatch = text.match(/Key\s*[:：]\s*([A-G][b#]?)/);
+    const capoMatch = text.match(/Capo\s*[:：]\s*(\d+)/);
+    if (keyMatch) {
+      originalKey = currentKey = keyMatch[1];
+    }
+    if (capoMatch) {
+      capo = parseInt(capoMatch[1]);
+    }
+
+    // 重建按鈕（更新選取狀態）
+    createButtons("key-buttons", keys, key => currentKey = key);
+    createButtons("capo-buttons", Array.from({length: 9}, (_, i) => i), c => capo = parseInt(c));
+    renderChordSheet();
+  };
+  reader.readAsText(file);
+});
+
+// 下載功能
+function downloadChordSheet() {
+  const converted = transposeChordSheet(chordSheet, originalKey, currentKey, capo);
+  const blob = new Blob([converted], {type: "text/plain"});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "轉調歌譜.txt";
+  link.click();
+}
+</script>
+
+</body>
+</html>
