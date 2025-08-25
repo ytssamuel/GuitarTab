@@ -596,7 +596,6 @@ def fibonacci(n):
                 <div class="syntax-item">
                     <h4>数学公式</h4>
                     <p>行内公式: <code>$E = mc^2$</code></p>
-                    <p>块级公式: <code>$$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$</code></p>
                 </div>
                 <div class="syntax-item">
                     <h4>流程图</h4>
@@ -664,7 +663,7 @@ gantt
         // 核心修改：确保 Mermaid 代码块被正确地返回为 HTML 字符串
         renderer.code = function(code, language) {
             if (language === 'mermaid') {
-                return `<div class="mermaid">${code}</div>`;
+                return `<pre class="mermaid">${code}</pre>`;
             } else {
                 return `<pre><code class="hljs language-${language}">${code}</code></pre>`;
             }
@@ -673,37 +672,41 @@ gantt
         // 异步渲染函数
         async function updatePreview() {
             const markdownText = editor.value;
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = 'block';
 
-            // 1. 渲染Markdown和代码高亮
-            const html = marked.parse(markdownText, { renderer: renderer });
-            preview.innerHTML = html;
-            document.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block);
-            });
+            try {
+                // 1. 渲染Markdown和代码高亮
+                const html = marked.parse(markdownText, { renderer: renderer });
+                preview.innerHTML = html;
+                document.querySelectorAll('pre code').forEach((block) => {
+                    try {
+                        hljs.highlightElement(block);
+                    } catch (e) {
+                        console.warn('高亮失败:', e);
+                        // 如果高亮失败，不中断执行，继续下一项
+                    }
+                });
 
-            // 2. 异步渲染Mermaid图表
-            const mermaidElements = document.querySelectorAll('.mermaid');
-            if (mermaidElements.length > 0) {
-                try {
+                // 2. 异步渲染Mermaid图表
+                const mermaidElements = document.querySelectorAll('.mermaid');
+                if (mermaidElements.length > 0) {
                     await mermaid.run({ nodes: mermaidElements, suppressErrors: true });
-                } catch (e) {
-                    console.error('Mermaid渲染错误:', e);
-                    mermaidElements.forEach(el => {
-                        el.innerHTML = `<div style="color: red; padding: 10px;">图表渲染错误: ${e.message}</div>`;
+                }
+
+                // 3. 异步渲染MathJax公式
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    await MathJax.typesetPromise().catch(e => {
+                        console.error('MathJax渲染错误:', e);
                     });
                 }
-            }
 
-            // 3. 异步渲染MathJax公式
-            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
-                await MathJax.typesetPromise().catch(e => {
-                    console.error('MathJax渲染错误:', e);
-                });
-            }
+                // 4. 隐藏加载指示器
+                loadingIndicator.style.display = 'none';
 
-            // 4. 隐藏加载指示器
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            if (loadingIndicator) {
+            } catch (e) {
+                console.error('渲染错误:', e);
+                preview.innerHTML = `<div style="color: red; padding: 20px;">渲染发生未知错误：${e.message}</div>`;
                 loadingIndicator.style.display = 'none';
             }
         }
