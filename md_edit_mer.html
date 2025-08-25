@@ -324,6 +324,7 @@
             margin: 20px 0;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
             overflow: auto;
+            text-align: center;
         }
         
         /* 响应式设计 */
@@ -398,6 +399,21 @@
             border-radius: 6px;
             overflow-x: auto;
             margin-top: 10px;
+        }
+
+        /* 加载指示器 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(66, 99, 235, 0.3);
+            border-radius: 50%;
+            border-top-color: #4263eb;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -564,7 +580,12 @@ def fibonacci(n):
             <div class="gutter"></div>
             
             <div class="panel">
-                <div id="preview"></div>
+                <div id="preview">
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="loading"></div>
+                        <p>正在加载预览...</p>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -617,7 +638,8 @@ gantt
                 useMaxWidth: true,
                 htmlLabels: true,
                 curve: 'basis'
-            }
+            },
+            securityLevel: 'loose'
         });
         
         // 配置Marked
@@ -645,11 +667,43 @@ gantt
         // 更新预览
         function updatePreview() {
             const markdownText = editor.value;
-            const html = marked.parse(markdownText);
+            
+            // 使用自定义渲染器处理Mermaid代码块
+            const renderer = new marked.Renderer();
+            
+            // 重写code方法以处理Mermaid代码块
+            renderer.code = function(code, language, isEscaped) {
+                if (language === 'mermaid') {
+                    return '<div class="mermaid">' + code + '</div>';
+                } else {
+                    // 默认代码块渲染
+                    return '<pre><code class="' + language + '">' + 
+                           (isEscaped ? code : escape(code)) + 
+                           '</code></pre>';
+                }
+            };
+            
+            // 使用自定义渲染器解析Markdown
+            const html = marked.parse(markdownText, { renderer: renderer });
             preview.innerHTML = html;
             
-            // 重新初始化Mermaid图表
-            mermaid.init(undefined, '.mermaid');
+            // 重新初始化代码高亮
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+            
+            // 重新渲染Mermaid图表
+            try {
+                mermaid.init(undefined, '.mermaid');
+            } catch (e) {
+                console.error('Mermaid渲染错误:', e);
+                // 显示错误信息
+                document.querySelectorAll('.mermaid').forEach((el) => {
+                    if (el.textContent.includes('graph') || el.textContent.includes('sequenceDiagram')) {
+                        el.innerHTML = '<div style="color: red; padding: 10px;">图表渲染错误: ' + e.message + '</div>';
+                    }
+                });
+            }
             
             // 重新渲染MathJax公式
             if (typeof MathJax !== 'undefined') {
@@ -712,8 +766,15 @@ gantt
             window.print();
         }
         
-        // 初始化Split.js（如果需要）
-        // 这里省略了Split.js的初始化，以保持代码简洁
+        // 辅助函数：转义HTML
+        function escape(html) {
+            return html
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
     </script>
 </body>
 </html>
