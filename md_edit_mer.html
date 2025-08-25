@@ -642,21 +642,6 @@ gantt
             securityLevel: 'loose'
         });
 
-        // 配置Marked
-        marked.setOptions({
-            highlight: function(code, lang) {
-                // 不对 mermaid 代码块进行高亮
-                if (lang === 'mermaid') {
-                    return code;
-                }
-                if (lang && hljs.getLanguage(lang)) {
-                    return hljs.highlight(code, { language: lang }).value;
-                }
-                return hljs.highlightAuto(code).value;
-            },
-            langPrefix: 'hljs language-'
-        });
-
         // 获取DOM元素
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
@@ -682,16 +667,18 @@ gantt
 
             try {
                 // 1. 渲染Markdown和代码高亮
+                // Marked.js 的高亮選項被移除，以防止衝突
                 const html = marked.parse(markdownText, { renderer: renderer });
                 preview.innerHTML = html;
+                
+                // 手動對非mermaid的程式碼區塊進行高亮
                 document.querySelectorAll('pre code').forEach((block) => {
-                    // 如果代码块的语言是 mermaid，则跳过高亮
-                    if (block.className.indexOf('language-mermaid') === -1) {
+                    const isMermaid = block.parentElement.classList.contains('mermaid');
+                    if (!isMermaid) {
                         try {
                             hljs.highlightElement(block);
                         } catch (e) {
                             console.warn('高亮失败:', e);
-                            // 如果高亮失败，不中断执行，继续下一项
                         }
                     }
                 });
