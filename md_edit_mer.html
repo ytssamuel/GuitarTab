@@ -645,6 +645,10 @@ gantt
         // 配置Marked
         marked.setOptions({
             highlight: function(code, lang) {
+                // 不对 mermaid 代码块进行高亮
+                if (lang === 'mermaid') {
+                    return code;
+                }
                 if (lang && hljs.getLanguage(lang)) {
                     return hljs.highlight(code, { language: lang }).value;
                 }
@@ -663,9 +667,10 @@ gantt
         // 核心修改：确保 Mermaid 代码块被正确地返回为 HTML 字符串
         renderer.code = function(code, language) {
             if (language === 'mermaid') {
-                return `<pre class="mermaid">${code}</pre>`;
+                return `<div class="mermaid">${code}</div>`;
             } else {
-                return `<pre><code class="hljs language-${language}">${code}</code></pre>`;
+                // Marked 已内建 HTML 轉義
+                return `<pre><code class="language-${language}">${code}</code></pre>`;
             }
         };
 
@@ -680,11 +685,14 @@ gantt
                 const html = marked.parse(markdownText, { renderer: renderer });
                 preview.innerHTML = html;
                 document.querySelectorAll('pre code').forEach((block) => {
-                    try {
-                        hljs.highlightElement(block);
-                    } catch (e) {
-                        console.warn('高亮失败:', e);
-                        // 如果高亮失败，不中断执行，继续下一项
+                    // 如果代码块的语言是 mermaid，则跳过高亮
+                    if (block.className.indexOf('language-mermaid') === -1) {
+                        try {
+                            hljs.highlightElement(block);
+                        } catch (e) {
+                            console.warn('高亮失败:', e);
+                            // 如果高亮失败，不中断执行，继续下一项
+                        }
                     }
                 });
 
