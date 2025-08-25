@@ -460,7 +460,7 @@
             <button class="secondary" onclick="clearEditor()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 极 1 2 2v2"></path>
                 </svg>
                 清空内容
             </button>
@@ -666,42 +666,59 @@ gantt
             if (language === 'mermaid') {
                 return '<div class="mermaid">' + code + '</div>';
             } else {
-                // 默认代码块渲染
-                return '<pre><code class="' + language + '">' + 
-                       (isEscaped ? code : escape(code)) + 
+                // 默认代码块渲染 - 修复转义问题
+                const escapedCode = typeof code === 'string' ? escapeHtml(code) : code;
+                return '<pre><code class="' + (language || '') + '">' + 
+                       (isEscaped ? code : escapedCode) + 
                        '</code></pre>';
             }
         };
+        
+        // 修复的HTML转义函数
+        function escapeHtml(html) {
+            if (typeof html !== 'string') return html;
+            return html
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
         
         // 更新预览
         function updatePreview() {
             const markdownText = editor.value;
             
-            // 使用自定义渲染器解析Markdown
-            const html = marked.parse(markdownText, { renderer: renderer });
-            preview.innerHTML = html;
-            
-            // 重新初始化代码高亮
-            document.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightBlock(block);
-            });
-            
-            // 重新渲染Mermaid图表
             try {
-                mermaid.init(undefined, '.mermaid');
-            } catch (e) {
-                console.error('Mermaid渲染错误:', e);
-                // 显示错误信息
-                document.querySelectorAll('.mermaid').forEach((el) => {
-                    if (el.textContent.includes('graph') || el.textContent.includes('sequenceDiagram')) {
-                        el.innerHTML = '<div style="color: red; padding: 10px;">图表渲染错误: ' + e.message + '</div>';
-                    }
+                // 使用自定义渲染器解析Markdown
+                const html = marked.parse(markdownText, { renderer: renderer });
+                preview.innerHTML = html;
+                
+                // 重新初始化代码高亮
+                document.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightBlock(block);
                 });
-            }
-            
-            // 重新渲染MathJax公式
-            if (typeof MathJax !== 'undefined') {
-                MathJax.typesetPromise();
+                
+                // 重新渲染Mermaid图表
+                try {
+                    mermaid.init(undefined, '.mermaid');
+                } catch (e) {
+                    console.error('Mermaid渲染错误:', e);
+                    // 显示错误信息
+                    document.querySelectorAll('.mermaid').forEach((el) => {
+                        if (el.textContent.includes('graph') || el.textContent.includes('sequenceDiagram')) {
+                            el.innerHTML = '<div style="color: red; padding: 10px;">图表渲染错误: ' + e.message + '</div>';
+                        }
+                    });
+                }
+                
+                // 重新渲染MathJax公式
+                if (typeof MathJax !== 'undefined') {
+                    MathJax.typesetPromise();
+                }
+            } catch (e) {
+                console.error('Markdown解析错误:', e);
+                preview.innerHTML = '<div style="color: red; padding: 20px;">解析错误: ' + e.message + '</div>';
             }
         }
         
@@ -771,16 +788,6 @@ gantt
             
             // 使用浏览器的打印功能生成PDF
             window.print();
-        }
-        
-        // 辅助函数：转义HTML
-        function escape(html) {
-            return html
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
         }
     </script>
 </body>
