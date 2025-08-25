@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级Markdown编辑器 - 支持数学公式与图表</title>
+    <!-- MathJax 数学公式支持 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js"></script>
+    <!-- Mermaid 图表支持 -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@9.3.0/dist/mermaid.min.js"></script>
+    <!-- Marked Markdown解析 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 代码高亮 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #4263eb 0%, #7048e8 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .toolbar {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 18px;
+            background: #f1f3f5;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background: #4263eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:hover {
+            background: #3b5bdb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        button.secondary {
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        button.secondary:hover {
+            background: #dee2e6;
+        }
+        
+        button.pdf {
+            background: #e63757;
+        }
+        
+        button.pdf:hover {
+            background: #d6336c;
+        }
+        
+        .split-container {
+            display: flex;
+            height: 65vh;
+            width: 100%;
+        }
+        
+        .panel {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+        
+        #editor {
+            width: 100%;
+            height: 100%;
+            resize: none;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            line-height: 1.5;
+            font-size: 15px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: border-color 0.2s;
+        }
+        
+        #editor:focus {
+            outline: none;
+            border-color: #4263eb;
+            box-shadow: inset 0 1px 3px rgba(66, 99, 235, 0.1);
+        }
+        
+        #preview {
+            overflow: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 25px;
+            background: white;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .gutter {
+            background-color: #f1f3f5;
+            background-repeat: no-repeat;
+            background-position: 50%;
+            cursor: col-resize;
+            width: 10px;
+            position: relative;
+        }
+        
+        .gutter::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 40px;
+            background: #ced4da;
+            border-radius: 2px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            border-top: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+        
+        /* Markdown 内容样式 */
+        #preview h1 {
+            padding-bottom: 0.3em;
+            margin-bottom: 0.8em;
+            border-bottom: 1px solid #eaecef;
+        }
+        
+        #preview h2 {
+            padding-bottom: 0.3em;
+            margin-top: 1.8em;
+            margin-bottom: 0.8em;
+            border-bottom: 1px solid #eaecef;
+        }
+        
+        #preview h1, #preview h2, #preview h3 {
+            color: #2c2c2c;
+        }
+        
+        #preview p {
+            margin-bottom: 1em;
+        }
+        
+        #preview code {
+            background-color: rgba(175, 184, 193, 0.2);
+            padding: 0.2em 0.4em;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+        
+        #preview pre {
+            background-color: #f6f8fa;
+            padding: 1.2em;
+            overflow: auto;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+            line-height: 1.45;
+        }
+        
+        #preview pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }
+        
+        #preview blockquote {
+            border-left: 4px solid #4263eb;
+            padding: 0 1em;
+            margin-left: 0;
+            color: #6a737d;
+            background: #f8f9fa;
+            padding-top: 0.8em;
+            padding-bottom: 0.8em;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        #preview table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1.5em;
+            display: block;
+            overflow: auto;
+        }
+        
+        #preview table th, #preview table td {
+            border: 1px solid #dfe2e5;
+            padding: 0.6em 1em;
+        }
+        
+        #preview table th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+        
+        #preview table tr:nth-child(even) {
+            background-color: #f6f8fa;
+        }
+        
+        #preview img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        #preview ul, #preview ol {
+            margin-bottom: 1em;
+            padding-left: 2em;
+        }
+        
+        #preview li {
+            margin-bottom: 0.4em;
+        }
+        
+        #preview a {
+            color: #4263eb;
+            text-decoration: none;
+        }
+        
+        #preview a:hover {
+            text-decoration: underline;
+        }
+        
+        #preview hr {
+            height: 0.25em;
+            padding: 0;
+            margin: 2em 0;
+            background-color: #e1e4e8;
+            border: 0;
+            border-radius: 1px;
+        }
+        
+        /* 数学公式样式 */
+        .MathJax {
+            outline: none;
+        }
+        
+        mjx-container[jax="CHTML"] {
+            outline: none;
+        }
+        
+        /* Mermaid图表样式 */
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            overflow: auto;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .split-container {
+                flex-direction: column;
+                height: 80vh;
+            }
+            
+            .gutter {
+                height: 10px;
+                width: 100%;
+                cursor: row-resize;
+            }
+            
+            .gutter::after {
+                width: 40px;
+                height: 4px;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        /* 语法提示 */
+        .syntax-help {
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            padding: 20px;
+        }
+        
+        .syntax-help h3 {
+            margin-bottom: 15px;
+            color: #4263eb;
+        }
+        
+        .syntax-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .syntax-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .syntax-item h4 {
+            margin-bottom: 10px;
+            color: #3b5bdb;
+        }
+        
+        .syntax-item code {
+            background: #f1f3f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .syntax-item pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>高级Markdown编辑器</h1>
+            <p class="description">支持数学公式、流程图、序列图、甘特图等多种图表类型</p>
+            <div class="features">
+                <div class="feature">数学公式支持</div>
+                <div class="feature">流程图</div>
+                <div class="feature">序列图</div>
+                <div class="feature">甘特图</div>
+                <div class="feature">类图</div>
+                <div class="feature">状态图</div>
+            </div>
+        </header>
+        
+        <div class="toolbar">
+            <button onclick="uploadFile()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                上传 Markdown
+            </button>
+            <button onclick="downloadFile()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                下载 Markdown
+            </button>
+            <button class="pdf" onclick="exportPDF()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <path d="M8 13h8M8 17h8M8 9h1"></path>
+                </svg>
+                导出 PDF
+            </button>
+            <button class="secondary" onclick="clearEditor()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                清空内容
+            </button>
+            <input type="file" id="fileInput" class="file-input" accept=".md, .markdown, text/markdown">
+        </div>
+        
+        <div class="split-container">
+            <div class="panel">
+                <textarea id="editor" placeholder="在此输入Markdown内容..."># 高级Markdown编辑器示例
+
+## 数学公式支持
+
+这个编辑器支持LaTeX格式的数学公式。
+
+### 行内公式
+
+爱因斯坦的质能方程：$E = mc^2$
+
+### 块级公式
+
+$$
+\int_{-\infty}^\infty e^{-x^2}dx = \sqrt{\pi}
+$$
+
+二次方程求根公式：
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+
+## 图表支持
+
+### 流程图
+
+\`\`\`mermaid
+graph TD;
+    A[开始] --> B[输入数据];
+    B --> C{处理数据};
+    C -->|成功| D[显示结果];
+    C -->|失败| E[显示错误];
+    D --> F[结束];
+    E --> F;
+\`\`\`
+
+### 序列图
+
+\`\`\`mermaid
+sequenceDiagram
+    participant 用户
+    participant 系统
+    participant 数据库
+
+    用户->>系统: 登录请求
+    系统->>数据库: 验证用户
+    数据库-->>系统: 返回用户数据
+    系统-->>用户: 登录成功
+\`\`\`
+
+### 甘特图
+
+\`\`\`mermaid
+gantt
+    title 项目开发计划
+    dateFormat  YYYY-MM-DD
+    section 设计
+    需求分析      :a1, 2023-10-01, 7d
+    原型设计      :after a1, 5d
+    section 开发
+    前端开发      :2023-10-13, 10d
+    后端开发      :2023-10-15, 14d
+    section 测试
+    单元测试      :2023-10-25, 5d
+    集成测试      :2023-10-30, 7d
+\`\`\`
+
+### 类图
+
+\`\`\`mermaid
+classDiagram
+    class Animal {
+        +String name
+        +void speak()
+    }
+    class Dog {
+        +void fetch()
+    }
+    class Cat {
+        +void climb()
+    }
+    
+    Animal <|-- Dog
+    Animal <|-- Cat
+\`\`\`
+
+## 代码高亮
+
+\`\`\`javascript
+// JavaScript示例
+function factorial(n) {
+    if (n === 0 || n === 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+\`\`\`
+
+\`\`\`python
+# Python示例
+def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        yield a
+        a, b = b, a + b
+\`\`\`
+</textarea>
+            </div>
+            
+            <div class="gutter"></div>
+            
+            <div class="panel">
+                <div id="preview"></div>
+            </div>
+        </div>
+        
+        <div class="syntax-help">
+            <h3>语法提示</h3>
+            <div class="syntax-grid">
+                <div class="syntax-item">
+                    <h4>数学公式</h4>
+                    <p>行内公式: <code>$E = mc^2$</code></p>
+                    <p>块级公式: <code>$$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$</code></p>
+                </div>
+                <div class="syntax-item">
+                    <h4>流程图</h4>
+                    <pre>```mermaid
+graph TD;
+    A[开始] --> B[结束];
+```</pre>
+                </div>
+                <div class="syntax-item">
+                    <h4>序列图</h4>
+                    <pre>```mermaid
+sequenceDiagram
+    participant A
+    A->>B: 消息;
+```</pre>
+                </div>
+                <div class="syntax-item">
+                    <h4>甘特图</h4>
+                    <pre>```mermaid
+gantt
+    title 标题
+    section 部分
+    任务 :a1, 2023-10-01, 7d;
+```</pre>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Made with ❤️ | 高级Markdown编辑器 © 2023 | 支持MathJax和Mermaid</p>
+        </footer>
+    </div>
+
+    <script>
+        // 初始化Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+        
+        // 配置Marked
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            langPrefix: 'hljs language-'
+        });
+        
+        // 获取DOM元素
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        const fileInput = document.getElementById('fileInput');
+        
+        // 初始渲染
+        updatePreview();
+        
+        // 监听编辑器内容变化
+        editor.addEventListener('input', updatePreview);
+        
+        // 更新预览
+        function updatePreview() {
+            const markdownText = editor.value;
+            const html = marked.parse(markdownText);
+            preview.innerHTML = html;
+            
+            // 重新初始化Mermaid图表
+            mermaid.init(undefined, '.mermaid');
+            
+            // 重新渲染MathJax公式
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise();
+            }
+        }
+        
+        // 上传文件
+        function uploadFile() {
+            fileInput.click();
+        }
+        
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    editor.value = e.target.result;
+                    updatePreview();
+                };
+                reader.readAsText(file);
+            }
+        });
+        
+        // 下载文件
+        function downloadFile() {
+            const content = editor.value;
+            if (!content.trim()) {
+                alert('编辑器内容为空！');
+                return;
+            }
+            
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'document.md';
+            a.click();
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // 清空编辑器
+        function clearEditor() {
+            if (confirm('确定要清空编辑器内容吗？')) {
+                editor.value = '';
+                updatePreview();
+            }
+        }
+        
+        // 导出PDF
+        function exportPDF() {
+            if (!editor.value.trim()) {
+                alert('编辑器内容为空，无法生成PDF！');
+                return;
+            }
+            
+            // 使用浏览器的打印功能生成PDF
+            window.print();
+        }
+        
+        // 初始化Split.js（如果需要）
+        // 这里省略了Split.js的初始化，以保持代码简洁
+    </script>
+</body>
+</html>
