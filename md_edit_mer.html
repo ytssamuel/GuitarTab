@@ -664,73 +664,64 @@ gantt
         // 重写code方法以处理Mermaid代码块
         renderer.code = function(code, language, isEscaped) {
             if (language === 'mermaid') {
-                // 返回一个占位符，Mermaid将在稍后渲染
                 return '<div class="mermaid">' + code + '</div>';
             } else {
-                // 默认代码块渲染
                 return '<pre><code class="' + language + '">' +
                        (isEscaped ? code : escape(code)) +
                        '</code></pre>';
             }
         };
 
-        // 更新预览
+        // 异步渲染函数
         async function updatePreview() {
             const markdownText = editor.value;
-            const loadingIndicator = document.getElementById('loadingIndicator');
 
-            try {
-                // 使用自定义渲染器解析Markdown
-                const html = marked.parse(markdownText, { renderer: renderer });
-                preview.innerHTML = html;
+            // 1. 渲染Markdown和代码高亮
+            const html = marked.parse(markdownText, { renderer: renderer });
+            preview.innerHTML = html;
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
 
-                // 重新初始化代码高亮
-                document.querySelectorAll('pre code').forEach((block) => {
-                    hljs.highlightElement(block);
-                });
-
-                // 重新渲染Mermaid图表
-                const mermaidElements = document.querySelectorAll('.mermaid');
-                if (mermaidElements.length > 0) {
-                    await mermaid.run({
-                        nodes: mermaidElements,
-                        suppressErrors: true
+            // 2. 异步渲染Mermaid图表
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            if (mermaidElements.length > 0) {
+                try {
+                    await mermaid.run({ nodes: mermaidElements, suppressErrors: true });
+                } catch (e) {
+                    console.error('Mermaid渲染错误:', e);
+                    mermaidElements.forEach(el => {
+                        el.innerHTML = `<div style="color: red; padding: 10px;">图表渲染错误: ${e.message}</div>`;
                     });
                 }
+            }
 
-                // 重新渲染MathJax公式
-                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
-                    await MathJax.typesetPromise();
-                }
+            // 3. 异步渲染MathJax公式
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                await MathJax.typesetPromise().catch(e => {
+                    console.error('MathJax渲染错误:', e);
+                });
+            }
 
-                // 渲染成功后，如果加载指示器存在，则移除它
-                if (loadingIndicator) {
-                    loadingIndicator.style.display = 'none';
-                }
-
-            } catch (e) {
-                console.error('渲染错误:', e);
-                // 显示错误信息
-                preview.innerHTML = `<div style="color: red; padding: 20px;">渲染错误: ${e.message}</div>`;
-                // 同样隐藏加载指示器
-                if (loadingIndicator) {
-                    loadingIndicator.style.display = 'none';
-                }
+            // 4. 隐藏加载指示器
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
             }
         }
 
         // 监听编辑器内容变化
+        let timer = null;
         editor.addEventListener('input', function() {
-            // 添加防抖动，减少不必要的渲染
-            clearTimeout(this.timer);
-            this.timer = setTimeout(updatePreview, 300);
+            clearTimeout(timer);
+            timer = setTimeout(updatePreview, 300); // 添加防抖，减少频繁渲染
         });
 
         // 页面加载完成后初始化预览
-        document.addEventListener('DOMContentLoaded', function() {
-            // 在DOM内容加载后立即渲染，提供初始预览
-            updatePreview();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await updatePreview();
         });
+
 
         // 以下是其他功能函数，保持不变
         // 上传文件
