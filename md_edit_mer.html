@@ -661,13 +661,12 @@ gantt
         // 自定义渲染器
         const renderer = new marked.Renderer();
 
-        // 重写code方法以处理Mermaid代码块，简化逻辑
+        // 核心修改：确保 Mermaid 代码块被正确地返回为 HTML 字符串
         renderer.code = function(code, language) {
             if (language === 'mermaid') {
-                return '<div class="mermaid">' + code + '</div>';
+                return `<div class="mermaid">${code}</div>`;
             } else {
-                // Marked 已内建 HTML 轉義
-                return '<pre><code class="' + language + '">' + code + '</code></pre>';
+                return `<pre><code class="hljs language-${language}">${code}</code></pre>`;
             }
         };
 
