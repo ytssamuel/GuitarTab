@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>高级Markdown编辑器 - 支持数学公式与图表</title>
-    <!-- MathJax 数学公式支持 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js"></script>
-    <!-- Mermaid 图表支持 -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@9.3.0/dist/mermaid.min.js"></script>
-    <!-- Marked Markdown解析 -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- 代码高亮 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
     <style>
@@ -19,7 +15,7 @@
             margin: 0;
             padding: 0;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
@@ -28,7 +24,7 @@
             padding: 20px;
             min-height: 100vh;
         }
-        
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -37,26 +33,26 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
-        
+
         header {
             background: linear-gradient(135deg, #4263eb 0%, #7048e8 100%);
             color: white;
             padding: 25px;
             text-align: center;
         }
-        
+
         h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
         }
-        
+
         .description {
             font-size: 1.1rem;
             opacity: 0.9;
             max-width: 800px;
             margin: 0 auto;
         }
-        
+
         .features {
             display: flex;
             flex-wrap: wrap;
@@ -64,14 +60,14 @@
             gap: 15px;
             margin-top: 20px;
         }
-        
+
         .feature {
             background: rgba(255, 255, 255, 0.2);
             padding: 8px 15px;
             border-radius: 20px;
             font-size: 0.9rem;
         }
-        
+
         .toolbar {
             display: flex;
             justify-content: center;
@@ -81,7 +77,7 @@
             background: #f1f3f5;
             border-bottom: 1px solid #e9ecef;
         }
-        
+
         button {
             padding: 12px 20px;
             background: #4263eb;
@@ -96,42 +92,42 @@
             gap: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         button:hover {
             background: #3b5bdb;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         button.secondary {
             background: #e9ecef;
             color: #495057;
         }
-        
+
         button.secondary:hover {
             background: #dee2e6;
         }
-        
+
         button.pdf {
             background: #e63757;
         }
-        
+
         button.pdf:hover {
             background: #d6336c;
         }
-        
+
         .split-container {
             display: flex;
             height: 65vh;
             width: 100%;
         }
-        
+
         .panel {
             flex: 1;
             overflow: auto;
             padding: 20px;
         }
-        
+
         #editor {
             width: 100%;
             height: 100%;
@@ -145,13 +141,13 @@
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
             transition: border-color 0.2s;
         }
-        
+
         #editor:focus {
             outline: none;
             border-color: #4263eb;
             box-shadow: inset 0 1px 3px rgba(66, 99, 235, 0.1);
         }
-        
+
         #preview {
             overflow: auto;
             border: 1px solid #e9ecef;
@@ -160,7 +156,7 @@
             background: white;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
         }
-        
+
         .gutter {
             background-color: #f1f3f5;
             background-repeat: no-repeat;
@@ -169,7 +165,7 @@
             width: 10px;
             position: relative;
         }
-        
+
         .gutter::after {
             content: "";
             position: absolute;
@@ -181,11 +177,11 @@
             background: #ced4da;
             border-radius: 2px;
         }
-        
+
         .file-input {
             display: none;
         }
-        
+
         footer {
             text-align: center;
             padding: 25px;
@@ -194,29 +190,29 @@
             border-top: 1px solid #e9ecef;
             background: #f8f9fa;
         }
-        
+
         /* Markdown 内容样式 */
         #preview h1 {
             padding-bottom: 0.3em;
             margin-bottom: 0.8em;
             border-bottom: 1px solid #eaecef;
         }
-        
+
         #preview h2 {
             padding-bottom: 0.3em;
             margin-top: 1.8em;
             margin-bottom: 0.8em;
             border-bottom: 1px solid #eaecef;
         }
-        
+
         #preview h1, #preview h2, #preview h3 {
             color: #2c2c2c;
         }
-        
+
         #preview p {
             margin-bottom: 1em;
         }
-        
+
         #preview code {
             background-color: rgba(175, 184, 193, 0.2);
             padding: 0.2em 0.4em;
@@ -224,7 +220,7 @@
             font-size: 0.9em;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
         }
-        
+
         #preview pre {
             background-color: #f6f8fa;
             padding: 1.2em;
@@ -233,13 +229,13 @@
             margin-bottom: 1.5em;
             line-height: 1.45;
         }
-        
+
         #preview pre code {
             background: none;
             padding: 0;
             border-radius: 0;
         }
-        
+
         #preview blockquote {
             border-left: 4px solid #4263eb;
             padding: 0 1em;
@@ -250,7 +246,7 @@
             padding-bottom: 0.8em;
             border-radius: 0 6px 6px 0;
         }
-        
+
         #preview table {
             border-collapse: collapse;
             width: 100%;
@@ -258,46 +254,46 @@
             display: block;
             overflow: auto;
         }
-        
+
         #preview table th, #preview table td {
             border: 1px solid #dfe2e5;
             padding: 0.6em 1em;
         }
-        
+
         #preview table th {
             background-color: #f6f8fa;
             font-weight: 600;
         }
-        
+
         #preview table tr:nth-child(even) {
             background-color: #f6f8fa;
         }
-        
+
         #preview img {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        
+
         #preview ul, #preview ol {
             margin-bottom: 1em;
             padding-left: 2em;
         }
-        
+
         #preview li {
             margin-bottom: 0.4em;
         }
-        
+
         #preview a {
             color: #4263eb;
             text-decoration: none;
         }
-        
+
         #preview a:hover {
             text-decoration: underline;
         }
-        
+
         #preview hr {
             height: 0.25em;
             padding: 0;
@@ -306,16 +302,16 @@
             border: 0;
             border-radius: 1px;
         }
-        
+
         /* 数学公式样式 */
         .MathJax {
             outline: none;
         }
-        
+
         mjx-container[jax="CHTML"] {
             outline: none;
         }
-        
+
         /* Mermaid图表样式 */
         .mermaid {
             background: white;
@@ -326,73 +322,73 @@
             overflow: auto;
             text-align: center;
         }
-        
+
         /* 响应式设计 */
         @media (max-width: 768px) {
             .split-container {
                 flex-direction: column;
                 height: 80vh;
             }
-            
+
             .gutter {
                 height: 10px;
                 width: 100%;
                 cursor: row-resize;
             }
-            
+
             .gutter::after {
                 width: 40px;
                 height: 4px;
             }
-            
+
             .toolbar {
                 flex-direction: column;
                 align-items: center;
             }
-            
+
             button {
                 width: 100%;
                 justify-content: center;
             }
         }
-        
+
         /* 语法提示 */
         .syntax-help {
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
             padding: 20px;
         }
-        
+
         .syntax-help h3 {
             margin-bottom: 15px;
             color: #4263eb;
         }
-        
+
         .syntax-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
         }
-        
+
         .syntax-item {
             background: white;
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
-        
+
         .syntax-item h4 {
             margin-bottom: 10px;
             color: #3b5bdb;
         }
-        
+
         .syntax-item code {
             background: #f1f3f5;
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 0.9em;
         }
-        
+
         .syntax-item pre {
             background: #f8f9fa;
             padding: 10px;
@@ -411,9 +407,14 @@
             border-top-color: #4263eb;
             animation: spin 1s ease-in-out infinite;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        .initial-loading {
+            text-align: center;
+            padding: 40px;
         }
     </style>
 </head>
@@ -431,7 +432,7 @@
                 <div class="feature">状态图</div>
             </div>
         </header>
-        
+
         <div class="toolbar">
             <button onclick="uploadFile()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -466,7 +467,7 @@
             </button>
             <input type="file" id="fileInput" class="file-input" accept=".md, .markdown, text/markdown">
         </div>
-        
+
         <div class="split-container">
             <div class="panel">
                 <textarea id="editor" placeholder="在此输入Markdown内容..."># 高级Markdown编辑器示例
@@ -549,7 +550,7 @@ classDiagram
     class Cat {
         +void climb()
     }
-    
+
     Animal <|-- Dog
     Animal <|-- Cat
 \`\`\`
@@ -576,19 +577,19 @@ def fibonacci(n):
 \`\`\`
 </textarea>
             </div>
-            
+
             <div class="gutter"></div>
-            
+
             <div class="panel">
                 <div id="preview">
-                    <div style="text-align: center; padding: 40px;">
+                    <div id="loadingIndicator" class="initial-loading">
                         <div class="loading"></div>
                         <p>正在加载预览...</p>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <div class="syntax-help">
             <h3>语法提示</h3>
             <div class="syntax-grid">
@@ -623,7 +624,7 @@ gantt
                 </div>
             </div>
         </div>
-        
+
         <footer>
             <p>Made with ❤️ | 高级Markdown编辑器 © 2023 | 支持MathJax和Mermaid</p>
         </footer>
@@ -632,7 +633,7 @@ gantt
     <script>
         // 初始化Mermaid
         mermaid.initialize({
-            startOnLoad: false, // 改为手动初始化
+            startOnLoad: false,
             theme: 'default',
             flowchart: {
                 useMaxWidth: true,
@@ -641,7 +642,7 @@ gantt
             },
             securityLevel: 'loose'
         });
-        
+
         // 配置Marked
         marked.setOptions({
             highlight: function(code, lang) {
@@ -652,78 +653,93 @@ gantt
             },
             langPrefix: 'hljs language-'
         });
-        
+
         // 获取DOM元素
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
-        const fileInput = document.getElementById('fileInput');
-        
+
         // 自定义渲染器
         const renderer = new marked.Renderer();
-        
+
         // 重写code方法以处理Mermaid代码块
         renderer.code = function(code, language, isEscaped) {
             if (language === 'mermaid') {
+                // 返回一个占位符，Mermaid将在稍后渲染
                 return '<div class="mermaid">' + code + '</div>';
             } else {
                 // 默认代码块渲染
-                return '<pre><code class="' + language + '">' + 
-                       (isEscaped ? code : escape(code)) + 
+                return '<pre><code class="' + language + '">' +
+                       (isEscaped ? code : escape(code)) +
                        '</code></pre>';
             }
         };
-        
+
         // 更新预览
-        function updatePreview() {
+        async function updatePreview() {
             const markdownText = editor.value;
-            
-            // 使用自定义渲染器解析Markdown
-            const html = marked.parse(markdownText, { renderer: renderer });
-            preview.innerHTML = html;
-            
-            // 重新初始化代码高亮
-            document.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightBlock(block);
-            });
-            
-            // 重新渲染Mermaid图表
+            const loadingIndicator = document.getElementById('loadingIndicator');
+
             try {
-                mermaid.init(undefined, '.mermaid');
-            } catch (e) {
-                console.error('Mermaid渲染错误:', e);
-                // 显示错误信息
-                document.querySelectorAll('.mermaid').forEach((el) => {
-                    if (el.textContent.includes('graph') || el.textContent.includes('sequenceDiagram')) {
-                        el.innerHTML = '<div style="color: red; padding: 10px;">图表渲染错误: ' + e.message + '</div>';
-                    }
+                // 使用自定义渲染器解析Markdown
+                const html = marked.parse(markdownText, { renderer: renderer });
+                preview.innerHTML = html;
+
+                // 重新初始化代码高亮
+                document.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
                 });
-            }
-            
-            // 重新渲染MathJax公式
-            if (typeof MathJax !== 'undefined') {
-                MathJax.typesetPromise();
+
+                // 重新渲染Mermaid图表
+                const mermaidElements = document.querySelectorAll('.mermaid');
+                if (mermaidElements.length > 0) {
+                    await mermaid.run({
+                        nodes: mermaidElements,
+                        suppressErrors: true
+                    });
+                }
+
+                // 重新渲染MathJax公式
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    await MathJax.typesetPromise();
+                }
+
+                // 渲染成功后，如果加载指示器存在，则移除它
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+
+            } catch (e) {
+                console.error('渲染错误:', e);
+                // 显示错误信息
+                preview.innerHTML = `<div style="color: red; padding: 20px;">渲染错误: ${e.message}</div>`;
+                // 同样隐藏加载指示器
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
             }
         }
-        
+
         // 监听编辑器内容变化
         editor.addEventListener('input', function() {
-            updatePreview();
+            // 添加防抖动，减少不必要的渲染
+            clearTimeout(this.timer);
+            this.timer = setTimeout(updatePreview, 300);
         });
-        
+
         // 页面加载完成后初始化预览
         document.addEventListener('DOMContentLoaded', function() {
-            // 使用setTimeout确保所有资源加载完成
-            setTimeout(function() {
-                updatePreview();
-            }, 100);
+            // 在DOM内容加载后立即渲染，提供初始预览
+            updatePreview();
         });
-        
+
+        // 以下是其他功能函数，保持不变
         // 上传文件
         function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
             fileInput.click();
         }
-        
-        fileInput.addEventListener('change', function(e) {
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -734,7 +750,7 @@ gantt
                 reader.readAsText(file);
             }
         });
-        
+
         // 下载文件
         function downloadFile() {
             const content = editor.value;
@@ -742,18 +758,18 @@ gantt
                 alert('编辑器内容为空！');
                 return;
             }
-            
+
             const blob = new Blob([content], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
-            
+
             const a = document.createElement('a');
             a.href = url;
             a.download = 'document.md';
             a.click();
-            
+
             URL.revokeObjectURL(url);
         }
-        
+
         // 清空编辑器
         function clearEditor() {
             if (confirm('确定要清空编辑器内容吗？')) {
@@ -761,18 +777,16 @@ gantt
                 updatePreview();
             }
         }
-        
+
         // 导出PDF
         function exportPDF() {
             if (!editor.value.trim()) {
                 alert('编辑器内容为空，无法生成PDF！');
                 return;
             }
-            
-            // 使用浏览器的打印功能生成PDF
             window.print();
         }
-        
+
         // 辅助函数：转义HTML
         function escape(html) {
             return html
