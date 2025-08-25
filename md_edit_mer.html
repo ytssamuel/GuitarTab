@@ -6,7 +6,7 @@
     <title>高级Markdown编辑器 - 支持数学公式与图表</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
     <style>
@@ -661,14 +661,13 @@ gantt
         // 自定义渲染器
         const renderer = new marked.Renderer();
 
-        // 重写code方法以处理Mermaid代码块
-        renderer.code = function(code, language, isEscaped) {
+        // 重写code方法以处理Mermaid代码块，简化逻辑
+        renderer.code = function(code, language) {
             if (language === 'mermaid') {
                 return '<div class="mermaid">' + code + '</div>';
             } else {
-                return '<pre><code class="' + language + '">' +
-                       (isEscaped ? code : escape(code)) +
-                       '</code></pre>';
+                // Marked 已内建 HTML 轉義
+                return '<pre><code class="' + language + '">' + code + '</code></pre>';
             }
         };
 
@@ -723,8 +722,7 @@ gantt
         });
 
 
-        // 以下是其他功能函数，保持不变
-        // 上传文件
+        // 以下是其他功能函数
         function uploadFile() {
             const fileInput = document.getElementById('fileInput');
             fileInput.click();
@@ -742,26 +740,21 @@ gantt
             }
         });
 
-        // 下载文件
         function downloadFile() {
             const content = editor.value;
             if (!content.trim()) {
                 alert('编辑器内容为空！');
                 return;
             }
-
             const blob = new Blob([content], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
-
             const a = document.createElement('a');
             a.href = url;
             a.download = 'document.md';
             a.click();
-
             URL.revokeObjectURL(url);
         }
 
-        // 清空编辑器
         function clearEditor() {
             if (confirm('确定要清空编辑器内容吗？')) {
                 editor.value = '';
@@ -769,23 +762,12 @@ gantt
             }
         }
 
-        // 导出PDF
         function exportPDF() {
             if (!editor.value.trim()) {
                 alert('编辑器内容为空，无法生成PDF！');
                 return;
             }
             window.print();
-        }
-
-        // 辅助函数：转义HTML
-        function escape(html) {
-            return html
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
         }
     </script>
 </body>
