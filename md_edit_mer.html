@@ -632,7 +632,7 @@ gantt
     <script>
         // 初始化Mermaid
         mermaid.initialize({
-            startOnLoad: true,
+            startOnLoad: false, // 改为手动初始化
             theme: 'default',
             flowchart: {
                 useMaxWidth: true,
@@ -658,30 +658,24 @@ gantt
         const preview = document.getElementById('preview');
         const fileInput = document.getElementById('fileInput');
         
-        // 初始渲染
-        updatePreview();
+        // 自定义渲染器
+        const renderer = new marked.Renderer();
         
-        // 监听编辑器内容变化
-        editor.addEventListener('input', updatePreview);
+        // 重写code方法以处理Mermaid代码块
+        renderer.code = function(code, language, isEscaped) {
+            if (language === 'mermaid') {
+                return '<div class="mermaid">' + code + '</div>';
+            } else {
+                // 默认代码块渲染
+                return '<pre><code class="' + language + '">' + 
+                       (isEscaped ? code : escape(code)) + 
+                       '</code></pre>';
+            }
+        };
         
         // 更新预览
         function updatePreview() {
             const markdownText = editor.value;
-            
-            // 使用自定义渲染器处理Mermaid代码块
-            const renderer = new marked.Renderer();
-            
-            // 重写code方法以处理Mermaid代码块
-            renderer.code = function(code, language, isEscaped) {
-                if (language === 'mermaid') {
-                    return '<div class="mermaid">' + code + '</div>';
-                } else {
-                    // 默认代码块渲染
-                    return '<pre><code class="' + language + '">' + 
-                           (isEscaped ? code : escape(code)) + 
-                           '</code></pre>';
-                }
-            };
             
             // 使用自定义渲染器解析Markdown
             const html = marked.parse(markdownText, { renderer: renderer });
@@ -710,6 +704,19 @@ gantt
                 MathJax.typesetPromise();
             }
         }
+        
+        // 监听编辑器内容变化
+        editor.addEventListener('input', function() {
+            updatePreview();
+        });
+        
+        // 页面加载完成后初始化预览
+        document.addEventListener('DOMContentLoaded', function() {
+            // 使用setTimeout确保所有资源加载完成
+            setTimeout(function() {
+                updatePreview();
+            }, 100);
+        });
         
         // 上传文件
         function uploadFile() {
