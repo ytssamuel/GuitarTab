@@ -1,111 +1,873 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>勝於塵土 - 和弦即時轉調工具</title>
+  <title>和弦譜即時轉調工具</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@4.0.10/marked.min.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
-    pre { background: #fff; padding: 1em; border: 1px solid #ccc; white-space: pre-wrap; }
-    .controls { margin-bottom: 1em; }
-    button { margin: 2px; padding: 6px 12px; }
-    h2 { margin-top: 1em; }
+    :root {
+      --bg-color: #282c34;
+      --container-bg: #1e2126;
+      --panel-bg: #21252b;
+      --text-color: #abb2bf;
+      --text-color-light: #5c6370;
+      --accent-color: #61afef;
+      --button-bg: #3e4452;
+      --button-hover-bg: #4a5160;
+      --border-color: #3e4452;
+      --highlight-color: #98c379;
+      --toolbar-bg: #21252b;
+      --header-footer-bg: #1e2126;
+      --line-number-bg: #2c313a;
+      --line-number-color: #5c6370;
+      --modal-input-bg: #2c313a;
+      --modal-input-color: #abb2bf;
+      --sidebar-bg: #1b1e22;
+    }
+
+    .light-mode {
+      --bg-color: #f8f9fa;
+      --container-bg: #ffffff;
+      --panel-bg: #f3f4f6;
+      --text-color: #343a40;
+      --text-color-light: #6c757d;
+      --accent-color: #007bff;
+      --button-bg: #e2e6ea;
+      --button-hover-bg: #d4d7db;
+      --border-color: #dee2e6;
+      --highlight-color: #28a745;
+      --toolbar-bg: #e9ecef;
+      --header-footer-bg: #ffffff;
+      --line-number-bg: #e9ecef;
+      --line-number-color: #adb5bd;
+      --modal-input-bg: #e9ecef;
+      --modal-input-color: #343a40;
+      --sidebar-bg: #e9ecef;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: var(--text-color);
+      background-color: var(--bg-color);
+      padding: 0;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100vw;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: var(--container-bg);
+      border-radius: 0;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s ease;
+    }
+
+    header {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--header-footer-bg);
+      transition: background 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 5px;
+      color: var(--text-color);
+      font-weight: 600;
+    }
+
+    .description {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+      list-style: none;
+    }
+
+    .feature-tag {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-color);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      border: 1px solid var(--border-color);
+      transition: background-color 0.3s ease;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 15px;
+      background: var(--toolbar-bg);
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.3s ease;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .right-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: absolute;
+      right: 15px;
+    }
+
+    button {
+      padding: 8px 12px;
+      background: var(--button-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      font-size: 0.8rem;
+    }
+
+    button:hover {
+      background: var(--button-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    button.active {
+      background: var(--accent-color);
+      color: #fff;
+      border-color: var(--accent-color);
+    }
+
+    button.active:hover {
+      background: var(--accent-color);
+    }
+
+    button i {
+      color: var(--highlight-color);
+      transition: color 0.3s ease;
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--text-color-light);
+    }
+
+    button.secondary:hover {
+      background: var(--button-hover-bg);
+      color: var(--text-color);
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .content-container {
+      display: flex;
+      flex-grow: 1;
+      width: 100%;
+      height: 100%;
+    }
+
+    .controls-panel {
+      width: 250px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-color);
+      padding: 20px 15px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: width 0.3s ease;
+    }
+
+    .controls-section {
+      margin-bottom: 20px;
+    }
+
+    .controls-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      margin-bottom: 15px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .key-buttons, .capo-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .key-button, .capo-button {
+      min-width: 40px;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .preview-panel {
+      flex: 1;
+      background: var(--panel-bg);
+      transition: background 0.3s ease;
+      position: relative;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: auto;
+    }
+
+    #preview {
+      flex-grow: 1;
+      overflow: auto;
+      border: none;
+      padding: 25px;
+      background: var(--panel-bg);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+      color: var(--text-color);
+      transition: background 0.3s ease, color 0.3s ease;
+      height: 100%;
+      min-width: 0;
+    }
+
+    #preview h1 {
+      padding-bottom: 0.3em;
+      margin-bottom: 0.8em;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--accent-color);
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    #preview h2 {
+      padding-bottom: 0.3em;
+      margin-top: 1.8em;
+      margin-bottom: 0.8em;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--accent-color);
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    #preview h3 {
+      color: var(--highlight-color);
+      transition: color 0.3s ease;
+    }
+
+    #preview pre {
+      background-color: var(--container-bg);
+      padding: 1.2em;
+      overflow: auto;
+      border-radius: 8px;
+      margin-bottom: 1.5em;
+      line-height: 1.45;
+      border: 1px solid var(--border-color);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+      font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      white-space: pre-wrap;
+    }
+
+    #preview code {
+      background-color: rgba(92, 99, 112, 0.2);
+      padding: 0.2em 0.4em;
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      color: var(--accent-color);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    footer {
+      text-align: center;
+      padding: 15px;
+      color: var(--text-color-light);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border-color);
+      background: var(--header-footer-bg);
+      transition: background 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .top-toggle-btn {
+      background: var(--button-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, background 0.2s ease;
+    }
+
+    .top-toggle-btn:hover {
+      background: var(--button-hover-bg);
+      transform: scale(1.1);
+    }
+
+    .top-toggle-btn i {
+      color: var(--highlight-color);
+      font-size: 1.2rem;
+      transition: transform 0.3s ease;
+    }
+
+    /* 標頭區塊的動畫樣式 */
+    header {
+      max-height: 200px; /* 預設一個足夠大的高度 */
+      overflow: hidden;
+      transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+    }
+
+    /* 當 body 加上 .collapsed-header 類別時，標頭收合 */
+    .collapsed-header header {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    /* 當標頭收合時，按鈕的箭頭朝下 */
+    .collapsed-header .top-toggle-btn i {
+      transform: rotate(180deg);
+    }
+
+    /* 模態框樣式 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: var(--container-bg);
+      color: var(--text-color);
+      padding: 30px;
+      border: 1px solid var(--border-color);
+      width: 80%;
+      max-width: 400px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .modal-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .modal-buttons button {
+      padding: 10px 20px;
+      flex: 1;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      border: 1px solid var(--border-color);
+      background: var(--modal-input-bg);
+      color: var(--modal-input-color);
+      border-radius: 6px;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+      font-family: 'Fira Code', monospace;
+    }
+
+    .modal-close {
+      color: var(--text-color-light);
+      font-size: 28px;
+      font-weight: bold;
+      position: absolute;
+      top: 10px;
+      right: 15px;
+    }
+
+    .modal-close:hover,
+    .modal-close:focus {
+      color: var(--text-color);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .content-container {
+        flex-direction: column;
+      }
+      
+      .controls-panel {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .right-buttons {
+        position: static;
+        margin-top: 10px;
+        justify-content: center;
+      }
+    }
+
+    /* 打印樣式 */
+    @media print {
+      .toolbar, .controls-panel, .right-buttons {
+        display: none !important;
+      }
+      
+      .content-container {
+        display: block;
+      }
+      
+      #preview {
+        padding: 0;
+        box-shadow: none;
+      }
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <h1>🎸 和弦譜即時轉調工具</h1>
+      <p class="description">上傳Markdown格式的和弦譜，即時調整調性和Capo位置</p>
+      <ul class="features">
+        <li class="feature-tag"><i class="fas fa-upload"></i> 上傳歌譜</li>
+        <li class="feature-tag"><i class="fas fa-music"></i> 即時轉調</li>
+        <li class="feature-tag"><i class="fas fa-download"></i> 下載儲存</li>
+        <li class="feature-tag"><i class="fas fa-file-pdf"></i> PDF匯出</li>
+        <li class="feature-tag"><i class="fas fa-palette"></i> 主題切換</li>
+      </ul>
+    </header>
 
-<h1>🎸 勝於塵土 和弦譜轉調工具</h1>
+    <div class="toolbar">
+      <button id="upload-btn">
+        <i class="fas fa-upload"></i>
+        上傳歌譜
+      </button>
+      <button id="download-btn">
+        <i class="fas fa-download"></i>
+        下載歌譜
+      </button>
+      <button id="export-pdf-btn">
+        <i class="fas fa-file-pdf"></i>
+        PDF匯出
+      </button>
+      <button id="theme-toggle-btn">
+        <i class="fas fa-sun"></i>
+        <span id="theme-text">淺色模式</span>
+      </button>
+      <input type="file" id="fileInput" class="file-input" accept=".md,.txt">
+      
+      <div class="right-buttons">
+        <button id="top-toggle-btn" class="top-toggle-btn" title="隱藏標頭">
+          <i class="fas fa-chevron-up"></i>
+        </button>
+      </div>
+    </div>
 
-<div class="controls">
-  <h2>🎼 選擇調性 (Key):</h2>
-  <div id="key-buttons"></div>
+    <div class="content-container">
+      <div class="controls-panel">
+        <div class="controls-section">
+          <div class="controls-title">🎼 選擇調性 (Key)</div>
+          <div class="key-buttons" id="key-buttons"></div>
+        </div>
 
-  <h2>🎸 Capo 位置:</h2>
-  <div id="capo-buttons"></div>
-</div>
+        <div class="controls-section">
+          <div class="controls-title">🎸 Capo 位置</div>
+          <div class="capo-buttons" id="capo-buttons"></div>
+        </div>
 
-<h2>和弦譜:</h2>
-<pre id="chord-display"></pre>
+        <div class="controls-section">
+          <div class="controls-title">ℹ️ 目前設定</div>
+          <div id="current-settings">
+            <p>原調: <span id="original-key-display">G</span></p>
+            <p>目標調: <span id="current-key-display">G</span></p>
+            <p>Capo: <span id="capo-display">0</span></p>
+            <p>檔案: <span id="filename-display">未選擇檔案</span></p>
+          </div>
+        </div>
+      </div>
 
-<script>
-const originalKey = 'G'; // 和弦譜原始調
-let currentKey = 'G';
-let capo = 0;
+      <div class="preview-panel">
+        <div id="preview"></div>
+      </div>
+    </div>
 
-const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const chordMap = {
-  'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11
-};
+    <footer>
+      <p>和弦譜轉調工具 | @2023</p>
+    </footer>
+  </div>
 
-function transposeChord(chord, diff) {
-  let match = chord.match(/^([A-G][b#]?)(.*)$/);
-  if (!match) return chord;
-  let [_, root, suffix] = match;
-  let idx = (chordMap[root] + diff + 12) % 12;
-  return keys[idx] + suffix;
-}
+  <!-- 模態框 -->
+  <div id="filenameModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <p id="modal-text">請輸入檔案名稱：</p>
+      <input type="text" id="filename-input" class="modal-input" value="轉調歌譜.md" />
+      <div class="modal-buttons">
+        <button id="modal-ok">確定</button>
+        <button id="modal-cancel" class="secondary">取消</button>
+      </div>
+    </div>
+  </div>
 
-function transposeChordSheet(sheet, fromKey, toKey, capoShift) {
-  let diff = (chordMap[toKey] - chordMap[fromKey] - capoShift + 12) % 12;
-  return sheet.replace(/\b([A-G][b#]?)(maj7|sus4|m|min|dim|aug|add\d*|\d*|)\b/g, (m, root, suffix) => {
-    return transposeChord(root + suffix, diff);
-  });
-}
+  <script>
+    // 常量和變數定義
+    const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const chordMap = {
+      'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11
+    };
 
-const chordSheet = `
-### [吉他譜] 將我的愛情給你 詞/曲:趙揚
+    let originalKey = 'G';
+    let currentKey = 'G';
+    let capo = 0;
+    let chordSheet = '';
+    let currentFileName = '';
+
+    // 範例和弦譜
+    const demoChordSheet = `### [吉他譜] 勝於塵土 More Than Ashes
 
 ---
 
 <pre>
-Capo : 0
+Key  : <sup>♭</sup>B (AG: G)   Capo : 3
+
+[Pre]
+    G  |  D  
 
 [Verse 1]
-G         Em           C               D
-我的良人 | 你  來  吧 | 你我可以往田間　|　去　｜
-G     Am  Bm     Em  Am       D       G　
-你我可以 | 在村莊住宿 | 在  村莊 住     | 宿   |
-
-[Verse 2]
-G         Em           C               D
-我們早 晨 |  早晨起  來 |  往葡萄園去看 | 看    | 
-G     Am  Bm     Em  Am       D       G　
-葡萄發 芽 |  開花沒  有 |  石榴放蕊沒   | 有    | 
+   G          Em
+我價值勝過於塵土
+          C      D   G       
+當你為我而來，必消失無形
+   G          Em
+因信基督我今站立
+        C      D    G
+當你注視我，一切都更新
 
 [Chorus]
-C     G/B   Am  D  G  C       A<sup>7</sup>/C   D
-我在那 裡 |  要將我 的 | 要將我的愛情給 | 你    |  
-C     G/B   Am  D  G  C        D      G
-我在那 裡 |  要將我 的 | 要將我的愛情給 | 你    |  
+      C<sub>maj7</sub>  D<sub>sus4</sub>    G 
+我是玫瑰，你受苦的喜悅
+      C<sub>maj7</sub>  D<sub>sus4</sub>     G      
+我深知道，你因我動心歡愉
+    C<sub>maj7</sub> D<sub>sus4</sub>     Em
+當我的心四面遭受責難
+           C<sub>maj7</sub>    D<sub>sus4</sub>  G
+你以真理護庇我，是你的玫瑰
 
-</pre>
-`;
+[Verse 2]
+   G          Em
+生命不再憑眼所見
+          C      D   G 
+我現與他合一，彰顯在他裡
+   G          Em
+我的愛為他寶貴珍惜
+          C      D   G 
+主我用眼一看，奪了你的心
 
-function renderChordSheet() {
-  const updated = transposeChordSheet(chordSheet, originalKey, currentKey, capo);
-  document.getElementById("chord-display").textContent = updated;
-}
+[Tag 1] x4
+      G          D
+我是玫瑰，谷中百合花
+     Em       C
+屬於你，我甚美麗
 
-function createButtons(containerId, values, clickHandler) {
-  const container = document.getElementById(containerId);
-  values.forEach(val => {
-    const btn = document.createElement("button");
-    btn.textContent = val;
-    btn.onclick = () => {
-      clickHandler(val);
+[Tag 2] x2
+ G          D  
+婚禮即將就要來臨
+              Em        C
+因我就是為了羔羊 的婚娶而活
+</pre>`;
+
+    // 初始化函數
+    function init() {
+      chordSheet = demoChordSheet;
+      createKeyButtons();
+      createCapoButtons();
       renderChordSheet();
-    };
-    container.appendChild(btn);
-  });
-}
+      setupEventListeners();
+      
+      // 設定初始主題
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'light') {
+        enableLightMode();
+      }
+    }
 
-// 初始化按鈕
-createButtons("key-buttons", keys, key => currentKey = key);
-createButtons("capo-buttons", Array.from({length: 9}, (_, i) => i), c => capo = parseInt(c));
+    // 建立調性按鈕
+    function createKeyButtons() {
+      const container = document.getElementById("key-buttons");
+      container.innerHTML = '';
+      
+      keys.forEach(key => {
+        const btn = document.createElement("button");
+        btn.className = `key-button ${key === currentKey ? 'active' : ''}`;
+        btn.textContent = key;
+        btn.onclick = () => {
+          document.querySelectorAll('.key-button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentKey = key;
+          document.getElementById('current-key-display').textContent = key;
+          renderChordSheet();
+        };
+        container.appendChild(btn);
+      });
+    }
 
-// 初始渲染
-renderChordSheet();
-</script>
+    // 建立Capo按鈕
+    function createCapoButtons() {
+      const container = document.getElementById("capo-buttons");
+      container.innerHTML = '';
+      
+      for (let i = 0; i <= 8; i++) {
+        const btn = document.createElement("button");
+        btn.className = `capo-button ${i === capo ? 'active' : ''}`;
+        btn.textContent = i;
+        btn.onclick = () => {
+          document.querySelectorAll('.capo-button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          capo = i;
+          document.getElementById('capo-display').textContent = i;
+          renderChordSheet();
+        };
+        container.appendChild(btn);
+      }
+    }
 
+    // 和弦轉調函數
+    function transposeChord(chord, diff) {
+      let match = chord.match(/^([A-G][b#]?)(.*)$/);
+      if (!match) return chord;
+      let [_, root, suffix] = match;
+      let idx = (chordMap[root] + diff + 12) % 12;
+      return keys[idx] + suffix;
+    }
+
+    // 和弦譜轉調函數
+    function transposeChordSheet(sheet, fromKey, toKey, capoShift) {
+      let diff = (chordMap[toKey] - chordMap[fromKey] - capoShift + 12) % 12;
+      return sheet.replace(/\b([A-G][b#]?)(maj7|sus4|m|min|dim|aug|add\d*|\d*|)?\b/g, (m, root, suffix) => {
+        return transposeChord(root + (suffix || ''), diff);
+      });
+    }
+
+    // 更新預覽區的Capo顯示
+    function updateCapoInPreview() {
+      // 替換Capo行
+      const capoPattern = /(Capo\s*[:：]\s*)(\d+)/gi;
+      const updatedSheet = chordSheet.replace(capoPattern, `$1${capo}`);
+      
+      // 轉調
+      const transposedSheet = transposeChordSheet(updatedSheet, originalKey, currentKey, capo);
+      
+      // 使用 marked.js 渲染 Markdown
+      const htmlContent = marked.parse(transposedSheet);
+      
+      // 顯示結果
+      document.getElementById("preview").innerHTML = htmlContent;
+    }
+
+    // 渲染和弦譜
+    function renderChordSheet() {
+      updateCapoInPreview();
+    }
+
+    // 顯示檔案名稱輸入模態框
+    function showFilenameModal(defaultName, callback) {
+      const modal = document.getElementById('filenameModal');
+      const filenameInput = document.getElementById('filename-input');
+      const modalOk = document.getElementById('modal-ok');
+      const modalCancel = document.getElementById('modal-cancel');
+      const modalClose = document.querySelector('.modal-close');
+      
+      filenameInput.value = defaultName;
+      modal.style.display = 'flex';
+      filenameInput.focus();
+      
+      const handleOk = () => {
+        modal.style.display = 'none';
+        callback(filenameInput.value);
+        removeEventListeners();
+      };
+      
+      const handleCancel = () => {
+        modal.style.display = 'none';
+        removeEventListeners();
+      };
+      
+      const removeEventListeners = () => {
+        modalOk.removeEventListener('click', handleOk);
+        modalCancel.removeEventListener('click', handleCancel);
+        modalClose.removeEventListener('click', handleCancel);
+      };
+      
+      modalOk.addEventListener('click', handleOk);
+      modalCancel.addEventListener('click', handleCancel);
+      modalClose.addEventListener('click', handleCancel);
+    }
+
+    // 匯出PDF
+    function exportToPDF() {
+      const element = document.getElementById('preview');
+      const opt = {
+        margin: 10,
+        filename: currentFileName ? `${currentFileName.replace('.md', '')}_轉調.pdf` : '轉調歌譜.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      
+      html2pdf().set(opt).from(element).save();
+    }
+
+    // 設定事件監聽器
+    function setupEventListeners() {
+      // 上傳檔案
+      document.getElementById("upload-btn").addEventListener("click", () => {
+        document.getElementById("fileInput").click();
+      });
+
+      document.getElementById("fileInput").addEventListener("change", event => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        currentFileName = file.name;
+        document.getElementById('filename-display').textContent = currentFileName;
+        
+        const reader = new FileReader();
+        reader.onload = e => {
+          const text = e.target.result;
+          chordSheet = text;
+
+          // 自動抓取Key與Capo資訊
+          const keyMatch = text.match(/Key\s*[:：]\s*([A-G][b#]?)/i);
+          const capoMatch = text.match(/Capo\s*[:：]\s*(\d+)/i);
+          
+          if (keyMatch) {
+            originalKey = keyMatch[1];
+            currentKey = originalKey;
+            document.getElementById('original-key-display').textContent = originalKey;
+            document.getElementById('current-key-display').textContent = currentKey;
+            
+            // 更新按鈕狀態
+            createKeyButtons();
+          }
+          
+          if (capoMatch) {
+            capo = parseInt(capoMatch[1]);
+            document.getElementById('capo-display').textContent = capo;
+            
+            // 更新按鈕狀態
+            createCapoButtons();
+          }
+
+          renderChordSheet();
+        };
+        reader.readAsText(file);
+      });
+
+      // 下載功能
+      document.getElementById("download-btn").addEventListener("click", () => {
+        const converted = transposeChordSheet(chordSheet, originalKey, currentKey, capo);
+        const defaultName = currentFileName ? currentFileName.replace('.md', '_轉調.md') : '轉調歌譜.md';
+        
+        showFilenameModal(defaultName, (filename) => {
+          const blob = new Blob([converted], {type: "text/plain"});
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = filename;
+          link.click();
+        });
+      });
+
+      // PDF匯出功能
+      document.getElementById("export-pdf-btn").addEventListener("click", exportToPDF);
+
+      // 主題切換
+      document.getElementById("theme-toggle-btn").addEventListener("click", toggleTheme);
+
+      // 標頭收合按鈕
+      document.getElementById("top-toggle-btn").addEventListener("click", () => {
+        const isHidden = document.body.classList.toggle('collapsed-header');
+        if (isHidden) {
+          document.getElementById("top-toggle-btn").title = "顯示標頭";
+        } else {
+          document.getElementById("top-toggle-btn").title = "隱藏標頭";
+        }
+      });
+    }
+
+    // 主題切換功能
+    function toggleTheme() {
+      if (document.body.classList.contains('light-mode')) {
+        disableLightMode();
+      } else {
+        enableLightMode();
+      }
+    }
+
+    function enableLightMode() {
+      document.body.classList.add('light-mode');
+      document.getElementById("theme-text").textContent = "深色模式";
+      document.getElementById("theme-toggle-btn").innerHTML = `<i class="fas fa-moon"></i><span id="theme-text">深色模式</span>`;
+      localStorage.setItem('theme', 'light');
+    }
+
+    function disableLightMode() {
+      document.body.classList.remove('light-mode');
+      document.getElementById("theme-text").textContent = "淺色模式";
+      document.getElementById("theme-toggle-btn").innerHTML = `<i class="fas fa-sun"></i><span id="theme-text">淺色模式</span>`;
+      localStorage.setItem('theme', 'dark');
+    }
+
+    // 設定 marked.js
+    marked.setOptions({
+      breaks: true,
+      gfm: true
+    });
+
+    // 初始化應用
+    window.onload = init;
+  </script>
 </body>
 </html>
