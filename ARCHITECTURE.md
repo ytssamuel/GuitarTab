@@ -18,21 +18,22 @@
 
 ### 架構圖
 ```mermaid
+%% Mermaid 10.8.0 compatible
 flowchart TD
   subgraph UI[UI Layer]
-    TB[Toolbar]\n(上傳/下載/PDF/主題)
-    CP[Controls Panel]\n(Key/Capo/設定)
-    PV[Preview Panel]\n(Markdown 渲染)
-    MD[Modal]\n(檔名輸入)
+    TB["Toolbar<br/>上傳/下載/PDF/主題"]
+    CP["Controls Panel<br/>Key/Capo/設定"]
+    PV["Preview Panel<br/>Markdown 渲染"]
+    MD["Modal<br/>檔名輸入"]
   end
 
   subgraph APP[Application Layer]
-    APPJS[app.js]\n(初始化/事件/協作)
+    APPJS["app.js<br/>初始化/事件/協作"]
   end
 
   subgraph MOD[Modules]
-    TR[transpose.js]\n(和弦轉調)
-    PDF[pdf.js]\n(PDF 匯出)
+    TR["transpose.js<br/>和弦轉調"]
+    PDF["pdf.js<br/>PDF 匯出"]
     ED[(editor.js)]
     TG[(tags.js)]
     SL[(songlist.js)]
@@ -62,6 +63,7 @@ flowchart TD
 
 ### 資料流程圖
 ```mermaid
+%% Mermaid 10.8.0 compatible
 flowchart TD
   U[User] -->|上傳/編輯| UI[UI]
   UI -->|文字| APP[app.js]
