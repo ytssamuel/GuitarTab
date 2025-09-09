@@ -1,10 +1,11 @@
-GuitarTab 專案目錄結構說明
+# GuitarTab 專案目錄結構說明
 
+```
 GuitarTab/
 ├── index.html                 # 主頁面（載入外部樣式與模組化腳本）
 ├── README.md                  # 專案簡介與特色
 ├── ARCHITECTURE.md            # 專案架構文件（流程圖、架構圖、循序圖）
-├── file_discription.txt       # 目錄結構說明（本文件）
+├── file_discription.md        # 目錄結構說明（本文件）
 ├── assets/                    # 前端資源
 │   ├── css/
 │   │   └── styles.css         # 全站樣式（暗/亮主題、版面、modal、print）
@@ -18,10 +19,11 @@ GuitarTab/
     ├── 我需要你的愛.md
     ├── 將我的愛情給你.md
     └── 勝餘塵土.md
+```
 
-未來擴充（規劃中）
-- assets/js/modules/editor.js   # Markdown 編輯器（或整合 CodeMirror/Monaco）
-- assets/js/modules/tags.js     # 小節 Tag（漸強/漸弱/Break/Solo...）
-- assets/js/modules/songlist.js # 歌序管理（歌單/演出模式）
-- assets/js/modules/state.js    # 全域狀態（原調/目標調/Capo/目前樂譜/檔名）
-- assets/js/modules/ui.js       # UI 控制、共用元件（Modal/Toast/快捷）
+## 未來擴充（規劃中）
+- `assets/js/modules/editor.js`   ：Markdown 編輯器（或整合 CodeMirror/Monaco）
+- `assets/js/modules/tags.js`     ：小節 Tag（漸強/漸弱/Break/Solo...）
+- `assets/js/modules/songlist.js` ：歌序管理（歌單/演出模式）
+- `assets/js/modules/state.js`    ：全域狀態（原調/目標調/Capo/目前樂譜/檔名）
+- `assets/js/modules/ui.js`       ：UI 控制、共用元件（Modal/Toast/快捷）
