@@ -136,6 +136,39 @@ footer { text-align: center; padding: 15px; color: var(--text-color-light); font
 
 .modal-close:hover, .modal-close:focus { color: var(--text-color); text-decoration: none; cursor: pointer; }
 
+/* 錯誤狀態樣式 */
+.error-state {
+  border: 2px solid #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.error-state::before {
+  content: "⚠️ 轉調過程中發生錯誤，請檢查和弦格式或調性設定";
+  display: block;
+  padding: 10px;
+  background-color: #dc3545;
+  color: white;
+  margin: -25px -25px 15px -25px;
+  font-weight: bold;
+  border-radius: 4px 4px 0 0;
+}
+
+/* 成功狀態提示 */
+.success-state {
+  border: 2px solid #28a745 !important;
+}
+
+.success-state::before {
+  content: "✅ 轉調完成";
+  display: block;
+  padding: 5px 10px;
+  background-color: #28a745;
+  color: white;
+  margin: -25px -25px 10px -25px;
+  font-size: 0.9em;
+  border-radius: 4px 4px 0 0;
+}
+
 @media (max-width: 768px) {
   .content-container { flex-direction: column; }
   .controls-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); }

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轉調功能測試</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-case { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .pass { background-color: #d4edda; border-color: #c3e6cb; }
+        .fail { background-color: #f8d7da; border-color: #f5c6cb; }
+        .test-input { font-weight: bold; color: #0066cc; }
+        .test-output { color: #006600; }
+        .test-expected { color: #666; }
+    </style>
+</head>
+<body>
+    <h1>🎸 轉調功能測試</h1>
+    <p>測試修正後的轉調功能，驗證bug是否已解決</p>
+    
+    <div id="test-results"></div>
+
+    <script type="module">
+        import { transposeChordSheet, transposeChord } from '../assets/js/modules/transpose.js';
+
+        const testCases = [
+            // 測試複雜和弦轉換
+            {
+                name: "複雜和弦轉換 - Bm7應該被正確轉換",
+                input: "Bm7 Cmaj7 Dsus4 Em7",
+                fromKey: "C",
+                toKey: "D", 
+                capo: 0,
+                expected: "C#m7 Dmaj7 Esus4 F#m7" // 升二度
+            },
+            {
+                name: "複雜和弦轉換 - 包含斜線和弦",
+                input: "Am7 Dm7 G7 C/E",
+                fromKey: "C",
+                toKey: "G",
+                capo: 0,
+                expected: "Em7 Am7 D7 G/B" // 升五度
+            },
+            {
+                name: "等音簡化 - 避免#b情況",
+                input: "C D E F G A B",
+                fromKey: "C",
+                toKey: "Db", 
+                capo: 0,
+                expected: "Db Eb F Gb Ab Bb C" // 升半度
+            },
+            {
+                name: "複合和弦測試",
+                input: "Cadd9 Gsus2 Am11 F6",
+                fromKey: "C",
+                toKey: "E",
+                capo: 0,
+                expected: "Eadd9 Bsus2 C#m11 A6" // 升四度
+            },
+            {
+                name: "減和弦與增和弦",
+                input: "Cdim Daug Em7b5",
+                fromKey: "C", 
+                toKey: "F",
+                capo: 0,
+                expected: "Fdim Gaug Am7b5" // 升五度
+            },
+            {
+                name: "實際歌曲測試 - 包含複雜和弦",
+                input: `[Verse]
+G          Em7
+我價值勝過於塵土
+      Cmaj7    D7   G       
+當你為我而來，必消失無形
+   Bm7        Em7
+因信基督我今站立
+        Am7      D7    G
+當你注視我，一切都更新`,
+                fromKey: "G",
+                toKey: "A",
+                capo: 0,
+                expected: `[Verse]
+A          F#m7
+我價值勝過於塵土
+      Dmaj7    E7   A       
+當你為我而來，必消失無形
+   C#m7        F#m7
+因信基督我今站立
+        Bm7      E7    A
+當你注視我，一切都更新`
+            }
+        ];
+
+        function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+            let passCount = 0;
+            let totalCount = testCases.length;
+
+            testCases.forEach((testCase, index) => {
+                const result = transposeChordSheet(
+                    testCase.input, 
+                    testCase.fromKey, 
+                    testCase.toKey, 
+                    testCase.capo
+                );
+                
+                const passed = result.trim() === testCase.expected.trim();
+                if (passed) passCount++;
+
+                const testDiv = document.createElement('div');
+                testDiv.className = `test-case ${passed ? 'pass' : 'fail'}`;
+                testDiv.innerHTML = `
+                    <h3>測試 ${index + 1}: ${testCase.name} ${passed ? '✅' : '❌'}</h3>
+                    <div class="test-input">輸入: ${testCase.fromKey} → ${testCase.toKey} (Capo: ${testCase.capo})</div>
+                    <div><strong>原文:</strong><br><pre>${testCase.input}</pre></div>
+                    <div class="test-output"><strong>實際結果:</strong><br><pre>${result}</pre></div>
+                    <div class="test-expected"><strong>預期結果:</strong><br><pre>${testCase.expected}</pre></div>
+                `;
+                resultsDiv.appendChild(testDiv);
+            });
+
+            // 顯示總結
+            const summaryDiv = document.createElement('div');
+            summaryDiv.style.cssText = 'margin-top: 20px; padding: 15px; background-color: #e7f3ff; border-radius: 5px;';
+            summaryDiv.innerHTML = `<h2>測試總結: ${passCount}/${totalCount} 通過 ${passCount === totalCount ? '🎉' : '⚠️'}</h2>`;
+            resultsDiv.insertBefore(summaryDiv, resultsDiv.firstChild);
+        }
+
+        // 執行測試
+        runTests();
+    </script>
+</body>
+</html>

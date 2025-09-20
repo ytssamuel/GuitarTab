@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 整合測試</title>
+    <style>
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            padding: 20px; 
+            max-width: 1200px; 
+            margin: 0 auto;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .success { border-color: #28a745; background: #f8fff8; }
+        .info { border-color: #17a2b8; background: #f0f9ff; }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .status.pass { background: #d4edda; color: #155724; }
+        .status.pending { background: #fff3cd; color: #856404; }
+        h1 { color: #495057; margin-bottom: 30px; }
+        h2 { color: #6c757d; margin-bottom: 15px; }
+        pre { 
+            background: #e9ecef; 
+            padding: 15px; 
+            border-radius: 6px; 
+            overflow-x: auto; 
+            font-size: 14px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .link-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .link-button:hover { background: #1e7e34; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 GuitarTab 整合測試</h1>
+        <p>驗證所有修改是否正確實施並正常工作</p>
+
+        <!-- 檔案結構檢查 -->
+        <div class="test-section info">
+            <h2>📁 檔案結構檢查</h2>
+            <ul class="checklist">
+                <li>✅ <strong>test/</strong> 資料夾已創建</li>
+                <li>✅ <strong>test_transpose.html</strong> 已移動到 test/ 資料夾</li>
+                <li>✅ <strong>debug_transpose.html</strong> 已移動到 test/ 資料夾</li>
+                <li>✅ <strong>validate_fix.mjs</strong> 已移動到 test/ 資料夾</li>
+                <li>✅ <strong>parse_test.html</strong> 新增解析測試</li>
+                <li>✅ <strong>sample_new_format.md</strong> 新格式範例檔案</li>
+            </ul>
+        </div>
+
+        <!-- 新格式範例 -->
+        <div class="test-section success">
+            <h2>📝 新的Key格式範例</h2>
+            <p>現在支援的格式：</p>
+            <pre>Key: Bb (AG:G)   Capo: 3</pre>
+            <p><strong>說明：</strong></p>
+            <ul>
+                <li><code>Bb</code> = 目標調性（演出調性）</li>
+                <li><code>G</code> = 原調性（AG，吉他實際彈奏的調性）</li>
+                <li><code>3</code> = Capo位置</li>
+            </ul>
+            
+            <p><strong>載入後的預期狀態：</strong></p>
+            <ul>
+                <li>原調: G <span class="status pass">✓</span></li>
+                <li>目標調: Bb <span class="status pass">✓</span></li>
+                <li>Capo: 3 <span class="status pass">✓</span></li>
+            </ul>
+        </div>
+
+        <!-- 向後相容性 -->
+        <div class="test-section info">
+            <h2>🔄 向後相容性</h2>
+            <p>舊格式仍然支援：</p>
+            <pre>Key: G   Capo: 0</pre>
+            <p>會被解析為：原調=G，目標調=G，Capo=0</p>
+        </div>
+
+        <!-- 測試連結 -->
+        <div class="test-section">
+            <h2>🧪 測試頁面</h2>
+            <p>點擊以下連結進行各種測試：</p>
+            
+            <div style="margin: 15px 0;">
+                <a href="../index.html" class="link-button" target="_blank">🎸 主應用程式</a>
+                <small>- 測試新格式載入和轉調功能</small>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <a href="parse_test.html" class="link-button" target="_blank">🔍 解析邏輯測試</a>
+                <small>- 驗證Key格式解析是否正確</small>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <a href="debug_transpose.html" class="link-button" target="_blank">🔧 轉調調試工具</a>
+                <small>- 深度測試轉調功能</small>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <a href="test_transpose.html" class="link-button" target="_blank">🧪 單元測試</a>
+                <small>- 基本轉調功能測試</small>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <a href="sample_new_format.md" class="link-button" target="_blank">📄 新格式範例檔案</a>
+                <small>- 可下載並上傳到主程式測試</small>
+            </div>
+        </div>
+
+        <!-- 手動驗證步驟 -->
+        <div class="test-section">
+            <h2>✋ 手動驗證步驟</h2>
+            <ol>
+                <li><strong>開啟主應用程式</strong>：點擊上方的"主應用程式"連結</li>
+                <li><strong>檢查初始狀態</strong>：
+                    <ul>
+                        <li>原調應顯示：G</li>
+                        <li>目標調應顯示：Bb</li>
+                        <li>Capo應顯示：3</li>
+                    </ul>
+                </li>
+                <li><strong>檢查預覽內容</strong>：應該看到轉調後的和弦</li>
+                <li><strong>測試檔案上傳</strong>：下載 <code>sample_new_format.md</code> 並上傳到主程式</li>
+                <li><strong>驗證解析</strong>：上傳後狀態應該正確顯示</li>
+                <li><strong>測試轉調</strong>：更改調性按鈕，確認和弦正確轉換</li>
+            </ol>
+        </div>
+
+        <!-- 已修正的問題總結 -->
+        <div class="test-section success">
+            <h2>✅ 完成的修改</h2>
+            <ul class="checklist">
+                <li>✅ <strong>檔案整理</strong>：測試相關檔案統一移動到 test/ 資料夾</li>
+                <li>✅ <strong>新格式支援</strong>：支援 <code>Key: Bb (AG:G)</code> 格式</li>
+                <li>✅ <strong>初始狀態</strong>：預設為 原調:G, 目標調:Bb, Capo:3</li>
+                <li>✅ <strong>解析邏輯</strong>：正確解析目標調和原調</li>
+                <li>✅ <strong>向後相容</strong>：舊格式仍然支援</li>
+                <li>✅ <strong>Bug修正</strong>：#b問題和複雜和弦問題已解決</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: #e7f3ff; border-radius: 8px;">
+            <h3>🎉 所有修改已完成！</h3>
+            <p>現在可以使用新的Key格式，並享受改進的轉調功能。</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -4,9 +4,9 @@ import { exportToPDF } from './modules/pdf.js';
 
 // state
 const state = {
-  originalKey: 'G',
-  currentKey: 'G',
-  capo: 0,
+  originalKey: 'G',    // 吉他彈的調性 (AG)
+  currentKey: 'Bb',    // 目標調性 (Key)
+  capo: 3,             // Capo位置
   chordSheet: '',
   currentFileName: ''
 };
@@ -51,11 +51,46 @@ function createCapoButtons() {
 }
 
 function updateCapoInPreview() {
-  const capoPattern = /(Capo\s*[:：]\s*)(\d+)/gi;
-  const updatedSheet = state.chordSheet.replace(capoPattern, `$1${state.capo}`);
-  const transposedSheet = transposeChordSheet(updatedSheet, state.originalKey, state.currentKey, state.capo);
-  const htmlContent = window.marked.parse(transposedSheet);
-  document.getElementById('preview').innerHTML = htmlContent;
+  try {
+    // 更新Capo標記
+    const capoPattern = /(Capo\s*[:：]\s*)(\d+)/gi;
+    const updatedSheet = state.chordSheet.replace(capoPattern, `$1${state.capo}`);
+    
+    // 執行轉調
+    const transposedSheet = transposeChordSheet(updatedSheet, state.originalKey, state.currentKey, state.capo);
+    
+    // 渲染Markdown
+    if (window.marked) {
+      const htmlContent = window.marked.parse(transposedSheet);
+      document.getElementById('preview').innerHTML = htmlContent;
+    } else {
+      console.error('Marked library not loaded');
+      document.getElementById('preview').innerHTML = '<p>錯誤：Markdown渲染器未載入</p>';
+    }
+    
+    // 清除之前的錯誤狀態
+    clearErrorState();
+    
+  } catch (error) {
+    console.error('Error in updateCapoInPreview:', error);
+    showErrorState('轉調過程中發生錯誤: ' + error.message);
+  }
+}
+
+function clearErrorState() {
+  const preview = document.getElementById('preview');
+  if (preview) {
+    preview.classList.remove('error-state');
+  }
+}
+
+function showErrorState(message) {
+  const preview = document.getElementById('preview');
+  if (preview) {
+    preview.classList.add('error-state');
+    // 可以在這裡顯示錯誤訊息給使用者
+    console.warn('User-facing error:', message);
+  }
 }
 
 function renderChordSheet() { updateCapoInPreview(); }
@@ -109,15 +144,28 @@ function setupEventListeners() {
     reader.onload = (e) => {
       const text = e.target.result;
       state.chordSheet = text;
-      const keyMatch = text.match(/Key\s*[:：]\s*([A-G][b#]?)/i);
+      
+      // 解析新格式: Key: Bb (AG:G) 或舊格式: Key: G
+      const keyMatchNew = text.match(/Key\s*[:：]\s*([A-G][b#]?)\s*\(\s*AG\s*[:：]\s*([A-G][b#]?)\s*\)/i);
+      const keyMatchOld = text.match(/Key\s*[:：]\s*([A-G][b#]?)/i);
       const capoMatch = text.match(/Capo\s*[:：]\s*(\d+)/i);
-      if (keyMatch) {
-        state.originalKey = keyMatch[1];
+      
+      if (keyMatchNew) {
+        // 新格式: Key: Bb (AG:G) - Bb是目標調，G是原調(吉他調)
+        state.currentKey = keyMatchNew[1];  // 目標調 (Bb)
+        state.originalKey = keyMatchNew[2]; // 原調/吉他調 (G)
+        document.getElementById('current-key-display').textContent = state.currentKey;
+        document.getElementById('original-key-display').textContent = state.originalKey;
+        createKeyButtons();
+      } else if (keyMatchOld) {
+        // 舊格式: Key: G - 當作原調，目標調設為相同
+        state.originalKey = keyMatchOld[1];
         state.currentKey = state.originalKey;
         document.getElementById('original-key-display').textContent = state.originalKey;
         document.getElementById('current-key-display').textContent = state.currentKey;
         createKeyButtons();
       }
+      
       if (capoMatch) {
         state.capo = parseInt(capoMatch[1]);
         document.getElementById('capo-display').textContent = state.capo;
@@ -179,7 +227,7 @@ function init() {
  
 
 <pre>
-Key  : <sup>♭</sup>B (AG:G)   Capo : 3
+Key: Bb (AG:G)   Capo: 3
 
 [Pre]
     G  |  D  
@@ -229,6 +277,12 @@ Key  : <sup>♭</sup>B (AG:G)   Capo : 3
 
   createKeyButtons();
   createCapoButtons();
+  
+  // 設定初始顯示狀態
+  document.getElementById('original-key-display').textContent = state.originalKey;
+  document.getElementById('current-key-display').textContent = state.currentKey;
+  document.getElementById('capo-display').textContent = state.capo;
+  
   renderChordSheet();
   setupEventListeners();
 

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 轉調調試工具</title>
+    <style>
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            padding: 20px; 
+            max-width: 1200px; 
+            margin: 0 auto;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .debug-section { 
+            margin: 20px 0; 
+            padding: 20px; 
+            border: 1px solid #e9ecef; 
+            border-radius: 8px; 
+            background: #f8f9fa;
+        }
+        .test-input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border: 1px solid #ced4da; 
+            border-radius: 6px;
+            font-family: 'Monaco', 'Fira Code', monospace;
+            font-size: 14px;
+        }
+        .test-output { 
+            padding: 15px; 
+            background: #e3f2fd; 
+            border-left: 4px solid #2196f3; 
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Fira Code', monospace;
+            font-size: 14px;
+        }
+        .error-output {
+            background: #ffebee;
+            border-left-color: #f44336;
+            color: #c62828;
+        }
+        .success-output {
+            background: #e8f5e8;
+            border-left-color: #4caf50;
+            color: #2e7d32;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .chord-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px;
+            margin: 15px 0;
+        }
+        .chord-item {
+            padding: 8px;
+            text-align: center;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Fira Code', monospace;
+            font-weight: bold;
+        }
+        .before { background: #fff3cd; }
+        .after { background: #d1ecf1; }
+        h1 { color: #495057; margin-bottom: 30px; }
+        h2 { color: #6c757d; margin-top: 30px; margin-bottom: 15px; }
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        label {
+            font-weight: 600;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 轉調調試工具</h1>
+        <p>用於測試和調試和弦轉調功能的專用工具</p>
+
+        <div class="controls">
+            <label for="fromKey">原調:</label>
+            <select id="fromKey">
+                <option value="C">C</option>
+                <option value="C#">C#</option>
+                <option value="D">D</option>
+                <option value="Eb">Eb</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="F#">F#</option>
+                <option value="G" selected>G</option>
+                <option value="G#">G#</option>
+                <option value="A">A</option>
+                <option value="Bb">Bb</option>
+                <option value="B">B</option>
+            </select>
+
+            <label for="toKey">目標調:</label>
+            <select id="toKey">
+                <option value="C">C</option>
+                <option value="C#">C#</option>
+                <option value="D" selected>D</option>
+                <option value="Eb">Eb</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="F#">F#</option>
+                <option value="G">G</option>
+                <option value="G#">G#</option>
+                <option value="A">A</option>
+                <option value="Bb">Bb</option>
+                <option value="B">B</option>
+            </select>
+
+            <label for="capo">Capo:</label>
+            <select id="capo">
+                <option value="0" selected>0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+            </select>
+
+            <button onclick="runLiveTest()">🧪 即時測試</button>
+            <button onclick="runBugTests()">🐛 Bug測試</button>
+            <button onclick="runComplexTests()">🎼 複雜和弦測試</button>
+        </div>
+
+        <div class="debug-section">
+            <h2>📝 輸入樂譜</h2>
+            <textarea id="inputSheet" class="test-input" rows="10" placeholder="請輸入包含和弦的Markdown樂譜...">### [吉他譜] 測試歌曲
+
+Key: G   Capo: 0
+
+[Verse]
+G          Em7
+測試歌詞一行
+      Cmaj7    D7   G       
+測試歌詞第二行
+   Bm7        Em7
+測試複雜和弦
+        Am7      D7    G
+最後一行測試</textarea>
+        </div>
+
+        <div class="debug-section">
+            <h2>📤 轉調結果</h2>
+            <div id="output" class="test-output">點擊"即時測試"查看結果...</div>
+        </div>
+
+        <div class="debug-section">
+            <h2>🔍 和弦對照表</h2>
+            <div id="chordComparison"></div>
+        </div>
+
+        <div class="debug-section">
+            <h2>🧪 自動化測試結果</h2>
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { transposeChordSheet, transposeChord, isValidChord, isValidKey } from '../assets/js/modules/transpose.js';
+
+        window.runLiveTest = function() {
+            const fromKey = document.getElementById('fromKey').value;
+            const toKey = document.getElementById('toKey').value;
+            const capo = parseInt(document.getElementById('capo').value);
+            const inputSheet = document.getElementById('inputSheet').value;
+            const outputDiv = document.getElementById('output');
+
+            try {
+                const result = transposeChordSheet(inputSheet, fromKey, toKey, capo);
+                outputDiv.className = 'test-output success-output';
+                outputDiv.textContent = result;
+                
+                // 更新和弦對照表
+                updateChordComparison(inputSheet, result);
+                
+            } catch (error) {
+                outputDiv.className = 'test-output error-output';
+                outputDiv.textContent = `錯誤: ${error.message}`;
+            }
+        };
+
+        function updateChordComparison(originalSheet, transposedSheet) {
+            const originalChords = extractChords(originalSheet);
+            const transposedChords = extractChords(transposedSheet);
+            
+            const comparisonDiv = document.getElementById('chordComparison');
+            
+            if (originalChords.length === 0) {
+                comparisonDiv.innerHTML = '<p>未發現和弦</p>';
+                return;
+            }
+
+            let html = '<div class="chord-grid">';
+            
+            const maxLength = Math.max(originalChords.length, transposedChords.length);
+            for (let i = 0; i < maxLength; i++) {
+                const orig = originalChords[i] || '';
+                const trans = transposedChords[i] || '';
+                
+                html += `
+                    <div class="chord-item before">${orig}</div>
+                    <div class="chord-item after">${trans}</div>
+                `;
+            }
+            
+            html += '</div>';
+            html += '<p><strong>說明:</strong> 黃色=原始和弦，藍色=轉調後和弦</p>';
+            
+            comparisonDiv.innerHTML = html;
+        }
+
+        function extractChords(sheet) {
+            const chordRegex = /\b([A-G][b#]?(?:(?:maj|min|m|dim|aug|sus|add|dom|alt)?(?:\d+)?(?:\/[A-G][b#]?)?)?)\b/g;
+            const matches = [];
+            let match;
+            
+            while ((match = chordRegex.exec(sheet)) !== null) {
+                if (isValidChord(match[1].split(/[^A-G#b]/)[0])) {
+                    matches.push(match[1]);
+                }
+            }
+            
+            return [...new Set(matches)]; // 去重
+        }
+
+        window.runBugTests = function() {
+            const testCases = [
+                {
+                    name: "修正 #b 問題",
+                    input: "C D E F G A B",
+                    fromKey: "C",
+                    toKey: "Db",
+                    capo: 0,
+                    expectedFixed: true,
+                    description: "轉調後不應出現如C#b的情況"
+                },
+                {
+                    name: "複雜和弦識別 - Bm7",
+                    input: "Bm7 Cmaj7 Dsus4",
+                    fromKey: "C", 
+                    toKey: "D",
+                    capo: 0,
+                    expected: "C#m7 Dmaj7 Esus4",
+                    description: "複雜和弦如Bm7應該被正確識別和轉換"
+                },
+                {
+                    name: "斜線和弦測試",
+                    input: "C/E Am/C D/F#",
+                    fromKey: "C",
+                    toKey: "G", 
+                    capo: 0,
+                    expected: "G/B Em/G A/C#",
+                    description: "斜線和弦應該被正確處理"
+                }
+            ];
+
+            runTestSuite(testCases);
+        };
+
+        window.runComplexTests = function() {
+            const testCases = [
+                {
+                    name: "所有複雜和弦類型",
+                    input: "Cmaj7 Dm7 Em7 Fmaj7 G7 Am7 Bm7b5",
+                    fromKey: "C",
+                    toKey: "G",
+                    capo: 0,
+                    expected: "Gmaj7 Am7 Bm7 Cmaj7 D7 Em7 F#m7b5"
+                },
+                {
+                    name: "add和弦和sus和弦",
+                    input: "Cadd9 Dsus2 Gsus4 Aadd11",
+                    fromKey: "C",
+                    toKey: "F",
+                    capo: 0,
+                    expected: "Fadd9 Gsus2 Csus4 Dadd11"
+                },
+                {
+                    name: "減和弦與增和弦",
+                    input: "Cdim Daug Gdim7 Aaug",
+                    fromKey: "C", 
+                    toKey: "E",
+                    capo: 0,
+                    expected: "Edim F#aug Bdim7 C#aug"
+                }
+            ];
+
+            runTestSuite(testCases);
+        };
+
+        function runTestSuite(testCases) {
+            const resultsDiv = document.getElementById('testResults');
+            let html = '';
+            let passCount = 0;
+
+            testCases.forEach((testCase, index) => {
+                try {
+                    const result = transposeChordSheet(
+                        testCase.input,
+                        testCase.fromKey,
+                        testCase.toKey,
+                        testCase.capo
+                    );
+
+                    let passed = false;
+                    let status = '';
+
+                    if (testCase.expected) {
+                        passed = result.trim() === testCase.expected.trim();
+                        status = passed ? '✅ 通過' : '❌ 失敗';
+                    } else if (testCase.expectedFixed) {
+                        // 檢查是否包含#b模式
+                        const hasInvalidEnharmonic = /[A-G]#b|[A-G]b#/.test(result);
+                        passed = !hasInvalidEnharmonic;
+                        status = passed ? '✅ 已修正' : '❌ 仍有問題';
+                    }
+
+                    if (passed) passCount++;
+
+                    html += `
+                        <div style="margin: 15px 0; padding: 15px; border: 1px solid ${passed ? '#28a745' : '#dc3545'}; border-radius: 6px; background: ${passed ? '#f8fff8' : '#fff8f8'};">
+                            <h4>${testCase.name} ${status}</h4>
+                            <p><strong>描述:</strong> ${testCase.description || '無'}</p>
+                            <p><strong>輸入:</strong> ${testCase.input}</p>
+                            <p><strong>轉調:</strong> ${testCase.fromKey} → ${testCase.toKey} (Capo: ${testCase.capo})</p>
+                            <p><strong>結果:</strong> ${result}</p>
+                            ${testCase.expected ? `<p><strong>預期:</strong> ${testCase.expected}</p>` : ''}
+                        </div>
+                    `;
+                } catch (error) {
+                    html += `
+                        <div style="margin: 15px 0; padding: 15px; border: 1px solid #dc3545; border-radius: 6px; background: #fff8f8;">
+                            <h4>${testCase.name} ❌ 錯誤</h4>
+                            <p><strong>錯誤:</strong> ${error.message}</p>
+                        </div>
+                    `;
+                }
+            });
+
+            html = `<h3>測試結果: ${passCount}/${testCases.length} 通過</h3>` + html;
+            resultsDiv.innerHTML = html;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 轉調調試工具已載入');
+            runLiveTest(); // 自動執行一次測試
+        });
+    </script>
+</body>
+</html>
