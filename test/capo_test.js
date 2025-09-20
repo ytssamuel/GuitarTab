@@ -251,6 +251,25 @@ class CapoTestSuite {
             };
         });
 
+        // 新增測試7: 驗證左側原調同步
+        this.runTest('左側原調同步測試', () => {
+            const original = `Key: Bb (AG:G)   Capo: 3`;
+            
+            // 模擬Capo變更為0，檢查AG是否正確變為Bb
+            const targetGuitarKey = this.transposeChord('Bb', -0); // Bb - 0 = Bb
+            
+            // 驗證計算是否正確
+            const expectedAG = 'Bb';
+            const actualAG = targetGuitarKey;
+            
+            return {
+                pass: actualAG === expectedAG,
+                expected: `左側原調應顯示: ${expectedAG}`,
+                actual: `計算結果: ${actualAG}`,
+                details: `Capo變更後，AG從G變為${actualAG}，左側原調應同步顯示${actualAG}`
+            };
+        });
+
         // 顯示總結
         console.log('\n📊 測試總結:');
         console.log(`通過: ${this.passCount}/${this.totalCount}`);

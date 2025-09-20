@@ -57,6 +57,9 @@ function updateCapoInPreview() {
     // 計算目標吉他調性：目標調性 - 新Capo = 目標吉他調性
     const targetGuitarKey = transposeChord(state.currentKey, -state.capo);
     
+    // 同步更新左側原調顯示，使其與當前AG保持一致
+    document.getElementById('original-key-display').textContent = targetGuitarKey;
+    
     // 更新Key行的格式，保持目標調性不變，更新AG(吉他彈奏調性)
     const keyPattern = /(Key\s*[:：]\s*)([A-G][b#]?)(\s*\(\s*AG\s*[:：]\s*)([A-G][b#]?)(\s*\))/gi;
     processedSheet = processedSheet.replace(keyPattern, `$1${state.currentKey}$3${targetGuitarKey}$5`);
@@ -72,7 +75,7 @@ function updateCapoInPreview() {
       if (line.match(/Key\s*[:：]/i)) {
         return line;
       }
-      // 其他行進行轉調
+      // 其他行進行轉調：從原始狀態的原調轉到目標吉他調性
       return transposeChordSheet(line, state.originalKey, targetGuitarKey, 0);
     });
     

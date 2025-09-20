@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>左側原調同步測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .scenario {
+            border: 1px solid #ddd;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        .scenario h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+            border-left: 4px solid #007bff;
+        }
+        .expected {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        .note {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎸 左側原調同步功能驗證指南</h1>
+    
+    <div class="test-container">
+        <h2>修正說明</h2>
+        <p>修正後的功能會讓左側的「原調」欄位隨著 AG (吉他實際彈奏調性) 同步變動。</p>
+        <p><strong>邏輯：</strong> 左側原調顯示 = AG 調性 = 目標調性 - Capo</p>
+    </div>
+
+    <div class="test-container">
+        <h2>測試場景</h2>
+        
+        <div class="scenario">
+            <h3>場景 1: 基本 Capo 變更</h3>
+            <div class="step">
+                <strong>初始狀態：</strong> Key: Bb (AG:G) Capo: 3
+                <br>左側原調顯示：G
+            </div>
+            <div class="step">
+                <strong>操作：</strong> 將 Capo 從 3 變更為 0
+            </div>
+            <div class="step expected">
+                <strong>期望結果：</strong>
+                <br>• 預覽區：Key: Bb (AG:Bb) Capo: 0
+                <br>• 左側原調顯示：Bb ← <strong>應該同步變更</strong>
+                <br>• 左下方目標調顯示：Bb (保持不變)
+            </div>
+        </div>
+
+        <div class="scenario">
+            <h3>場景 2: Capo 增加</h3>
+            <div class="step">
+                <strong>初始狀態：</strong> Key: Bb (AG:Bb) Capo: 0
+                <br>左側原調顯示：Bb
+            </div>
+            <div class="step">
+                <strong>操作：</strong> 將 Capo 從 0 變更為 3
+            </div>
+            <div class="step expected">
+                <strong>期望結果：</strong>
+                <br>• 預覽區：Key: Bb (AG:G) Capo: 3
+                <br>• 左側原調顯示：G ← <strong>應該同步變更</strong>
+                <br>• 左下方目標調顯示：Bb (保持不變)
+            </div>
+        </div>
+
+        <div class="scenario">
+            <h3>場景 3: 目標調性變更</h3>
+            <div class="step">
+                <strong>初始狀態：</strong> Key: Bb (AG:G) Capo: 3
+                <br>左側原調顯示：G
+            </div>
+            <div class="step">
+                <strong>操作：</strong> 將目標調性從 Bb 變更為 C
+            </div>
+            <div class="step expected">
+                <strong>期望結果：</strong>
+                <br>• 預覽區：Key: C (AG:A) Capo: 3
+                <br>• 左側原調顯示：A ← <strong>應該同步變更</strong>
+                <br>• 左下方目標調顯示：C (跟隨變更)
+            </div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>手動測試步驟</h2>
+        <ol>
+            <li>打開主應用程式 (index.html)</li>
+            <li>觀察左側原調欄位的初始值</li>
+            <li>點擊不同的 Capo 按鈕 (0, 1, 2, 3...)</li>
+            <li>確認左側原調欄位會隨著 AG 調性同步變更</li>
+            <li>點擊不同的目標調性按鈕</li>
+            <li>確認左側原調欄位也會相應調整</li>
+        </ol>
+        
+        <div class="step note">
+            <strong>注意：</strong> 左側原調應該始終與預覽區 Key 行中的 AG 調性保持一致
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>計算公式驗證</h2>
+        <div class="step">
+            <strong>公式：</strong> 左側原調 = 目標調性 - Capo
+        </div>
+        <div class="step">
+            <strong>範例：</strong>
+            <br>• 目標調性 Bb (= 10), Capo 3 → 原調 = (10-3+12)%12 = 7 = G ✓
+            <br>• 目標調性 Bb (= 10), Capo 0 → 原調 = (10-0+12)%12 = 10 = Bb ✓
+            <br>• 目標調性 C (= 0), Capo 3 → 原調 = (0-3+12)%12 = 9 = A ✓
+        </div>
+    </div>
+
+    <script>
+        console.log('左側原調同步測試指南已載入');
+        console.log('請按照上述步驟在主應用程式中進行測試');
+    </script>
+</body>
+</html>
