@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capo修正功能測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            border: 1px solid #ddd;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .test-case.pass {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .test-case.fail {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .test-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .expected, .actual {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        .expected {
+            border-left: 4px solid #28a745;
+        }
+        .actual {
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .summary {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .summary.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .summary.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎸 Capo修正功能測試</h1>
+    
+    <div class="test-container">
+        <button onclick="runAllTests()">執行所有測試</button>
+        <button onclick="clearResults()">清除結果</button>
+    </div>
+
+    <div id="test-results"></div>
+    <div id="summary"></div>
+
+    <script type="module">
+        // 模擬導入所需的函數
+        import { transposeChord, transposeChordSheet } from '../assets/js/modules/transpose.js';
+
+        // 模擬 app.js 中的核心功能
+        function simulateCapoChange(originalSheet, currentKey, originalKey, newCapo) {
+            try {
+                let processedSheet = originalSheet;
+                
+                // 計算新的吉他彈奏調性：為了達到目標調性，在當前capo位置下應該彈什麼調
+                const newGuitarKey = transposeChord(currentKey, -newCapo);
+                
+                // 更新Key行的格式，保持目標調性不變，但更新AG(吉他彈奏調性)和Capo
+                const keyPattern = /(Key\s*[:：]\s*)([A-G][b#]?)(\s*\(\s*AG\s*[:：]\s*)([A-G][b#]?)(\s*\))/gi;
+                processedSheet = processedSheet.replace(keyPattern, `$1${currentKey}$3${newGuitarKey}$5`);
+                
+                // 更新單獨的Capo標記
+                const capoPattern = /(Capo\s*[:：]\s*)(\d+)/gi;
+                processedSheet = processedSheet.replace(capoPattern, `$1${newCapo}`);
+                
+                // 執行和弦轉調（從原始吉他調性轉到新的吉他調性）
+                const transposedSheet = transposeChordSheet(processedSheet, originalKey, newGuitarKey, 0);
+                
+                return transposedSheet;
+            } catch (error) {
+                throw new Error('轉調過程中發生錯誤: ' + error.message);
+            }
+        }
+
+        // 測試案例
+        const testCases = [
+            {
+                name: "原始案例 - Capo 3 到 0",
+                originalSheet: `Key: Bb (AG:G)   Capo: 3
+
+[Pre]
+    G  |  D  
+
+[Verse 1]
+   G          Em`,
+                currentKey: "Bb",
+                originalKey: "G",
+                newCapo: 0,
+                expected: {
+                    keyLine: "Key: Bb (AG:Bb)   Capo: 0",
+                    chords: ["Bb", "F", "Bb", "Gm"]
+                }
+            },
+            {
+                name: "Capo 0 到 3",
+                originalSheet: `Key: Bb (AG:Bb)   Capo: 0
+
+[Pre]
+    Bb  |  F  
+
+[Verse 1]
+   Bb          Gm`,
+                currentKey: "Bb",
+                originalKey: "Bb",
+                newCapo: 3,
+                expected: {
+                    keyLine: "Key: Bb (AG:G)   Capo: 3",
+                    chords: ["G", "D", "G", "Em"]
+                }
+            },
+            {
+                name: "目標調性變更 - C調",
+                originalSheet: `Key: Bb (AG:G)   Capo: 3
+
+[Pre]
+    G  |  D  
+
+[Verse 1]
+   G          Em`,
+                currentKey: "C",
+                originalKey: "G",
+                newCapo: 3,
+                expected: {
+                    keyLine: "Key: C (AG:G#)   Capo: 3",
+                    chords: ["G#", "D#", "G#", "Fm"]
+                }
+            },
+            {
+                name: "Capo 5 測試",
+                originalSheet: `Key: D (AG:A)   Capo: 7
+
+[Verse]
+   A          F#m
+   D          E`,
+                currentKey: "D",
+                originalKey: "A",
+                newCapo: 5,
+                expected: {
+                    keyLine: "Key: D (AG:Bb)   Capo: 5",
+                    chords: ["Bb", "Gm", "Eb", "F"]
+                }
+            },
+            {
+                name: "複雜和弦測試",
+                originalSheet: `Key: G (AG:D)   Capo: 7
+
+[Chorus]
+      Dmaj7  Asus4    G 
+      Em7    Bm       A`,
+                currentKey: "G",
+                originalKey: "D",
+                newCapo: 2,
+                expected: {
+                    keyLine: "Key: G (AG:E)   Capo: 2",
+                    chords: ["Emaj7", "Bsus4", "A", "F#m7", "C#m", "B"]
+                }
+            }
+        ];
+
+        // 執行單個測試
+        function runSingleTest(testCase) {
+            try {
+                const result = simulateCapoChange(
+                    testCase.originalSheet,
+                    testCase.currentKey,
+                    testCase.originalKey,
+                    testCase.newCapo
+                );
+
+                // 驗證 Key 行
+                const keyLineMatch = result.match(/(Key\s*[:：]\s*[A-G][b#]?\s*\(\s*AG\s*[:：]\s*[A-G][b#]?\s*\)\s*Capo\s*[:：]\s*\d+)/i);
+                const actualKeyLine = keyLineMatch ? keyLineMatch[0] : "未找到Key行";
+
+                // 提取所有和弦
+                const chordMatches = result.match(/\b([A-G][b#]?(?:maj|min|m|dim|aug|sus|add|dom|alt)?(?:\d+)?(?:[b#]\d+)?)\b/g);
+                const actualChords = chordMatches ? chordMatches.filter(chord => 
+                    !chord.match(/^(Key|AG|Capo|Pre|Verse|Chorus|Tag|Bridge)$/i)
+                ) : [];
+
+                // 檢查結果
+                const keyLinePass = actualKeyLine === testCase.expected.keyLine;
+                const chordsPass = JSON.stringify(actualChords) === JSON.stringify(testCase.expected.chords);
+                const testPass = keyLinePass && chordsPass;
+
+                return {
+                    pass: testPass,
+                    actualKeyLine,
+                    actualChords,
+                    keyLinePass,
+                    chordsPass,
+                    fullResult: result
+                };
+            } catch (error) {
+                return {
+                    pass: false,
+                    error: error.message
+                };
+            }
+        }
+
+        // 顯示測試結果
+        function displayTestResult(testCase, result, index) {
+            const container = document.getElementById('test-results');
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-case ${result.pass ? 'pass' : 'fail'}`;
+            
+            let html = `
+                <div class="test-title">測試 ${index + 1}: ${testCase.name}</div>
+            `;
+
+            if (result.error) {
+                html += `<div class="error">錯誤: ${result.error}</div>`;
+            } else {
+                html += `
+                    <div>
+                        <strong>Key行測試:</strong> ${result.keyLinePass ? '✅ 通過' : '❌ 失敗'}
+                        <div class="expected">期望: ${testCase.expected.keyLine}</div>
+                        <div class="actual">實際: ${result.actualKeyLine}</div>
+                    </div>
+                    <div>
+                        <strong>和弦測試:</strong> ${result.chordsPass ? '✅ 通過' : '❌ 失敗'}
+                        <div class="expected">期望和弦: [${testCase.expected.chords.join(', ')}]</div>
+                        <div class="actual">實際和弦: [${result.actualChords.join(', ')}]</div>
+                    </div>
+                    <details>
+                        <summary>完整輸出</summary>
+                        <pre>${result.fullResult}</pre>
+                    </details>
+                `;
+            }
+
+            testDiv.innerHTML = html;
+            container.appendChild(testDiv);
+        }
+
+        // 執行所有測試
+        window.runAllTests = function() {
+            const container = document.getElementById('test-results');
+            container.innerHTML = '';
+            
+            let passCount = 0;
+            let totalCount = testCases.length;
+
+            testCases.forEach((testCase, index) => {
+                const result = runSingleTest(testCase);
+                displayTestResult(testCase, result, index);
+                if (result.pass) passCount++;
+            });
+
+            // 顯示摘要
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.className = `summary ${passCount === totalCount ? 'pass' : 'fail'}`;
+            summaryDiv.innerHTML = `
+                測試摘要: ${passCount}/${totalCount} 通過
+                ${passCount === totalCount ? '🎉 所有測試都通過了！' : '⚠️ 有測試失敗，請檢查上述結果'}
+            `;
+        };
+
+        // 清除結果
+        window.clearResults = function() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('summary').innerHTML = '';
+        };
+
+        // 頁面載入後自動執行測試
+        window.addEventListener('load', () => {
+            console.log('測試頁面已載入，點擊按鈕開始測試');
+        });
+    </script>
+</body>
+</html>

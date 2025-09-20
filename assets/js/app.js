@@ -1,5 +1,5 @@
 // App bootstrap and UI wiring
-import { KEYS, CHORD_MAP, transposeChordSheet } from './modules/transpose.js';
+import { KEYS, CHORD_MAP, transposeChordSheet, transposeChord } from './modules/transpose.js';
 import { exportToPDF } from './modules/pdf.js';
 
 // state
@@ -52,12 +52,31 @@ function createCapoButtons() {
 
 function updateCapoInPreview() {
   try {
+    let processedSheet = state.chordSheet;
+    
+    // 計算目標吉他調性：目標調性 - 新Capo = 目標吉他調性
+    const targetGuitarKey = transposeChord(state.currentKey, -state.capo);
+    
+    // 更新Key行的格式，保持目標調性不變，更新AG(吉他彈奏調性)
+    const keyPattern = /(Key\s*[:：]\s*)([A-G][b#]?)(\s*\(\s*AG\s*[:：]\s*)([A-G][b#]?)(\s*\))/gi;
+    processedSheet = processedSheet.replace(keyPattern, `$1${state.currentKey}$3${targetGuitarKey}$5`);
+    
     // 更新Capo標記
     const capoPattern = /(Capo\s*[:：]\s*)(\d+)/gi;
-    const updatedSheet = state.chordSheet.replace(capoPattern, `$1${state.capo}`);
+    processedSheet = processedSheet.replace(capoPattern, `$1${state.capo}`);
     
-    // 執行轉調
-    const transposedSheet = transposeChordSheet(updatedSheet, state.originalKey, state.currentKey, state.capo);
+    // 分離Key行和其他內容，只轉調和弦部分
+    const lines = processedSheet.split('\n');
+    const transposedLines = lines.map(line => {
+      // 如果是Key行，保持不變
+      if (line.match(/Key\s*[:：]/i)) {
+        return line;
+      }
+      // 其他行進行轉調
+      return transposeChordSheet(line, state.originalKey, targetGuitarKey, 0);
+    });
+    
+    const transposedSheet = transposedLines.join('\n');
     
     // 渲染Markdown
     if (window.marked) {
